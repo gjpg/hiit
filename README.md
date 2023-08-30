@@ -1,2 +1,2 @@
-# hit
+# hiit
 run timer
