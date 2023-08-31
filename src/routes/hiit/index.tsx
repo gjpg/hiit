@@ -1,34 +1,73 @@
 import { component$, $ } from "@builder.io/qwik";
 
-export default component$(() => {
+interface CircleProps {
+    labelSegment: number; // 0 -> 1
+}
+
+//positive offset = anti-clockwise
+//negative offset = clockwise
+
+//we want labelSegment offsetted to be centered at 6 o clock
+//calculate how many pixels to offset to do that
+//-0.25 * pathLength moves it to START at 6 o clock
+//then take HALF of labelSegment and calculate what proportion of pathLength that is
+//(labelSegment/2) * pathLength)
+
+//so:
+//((-0.25 * pathLength) + ((labelSegment/2) * pathLength))
+
+export default component$(({labelSegment = 0.3}: CircleProps) => {
+    const radius = 90;
+    const pathLength = radius * 2 * Math.PI;
+    const offset = ((-0.25 * pathLength) + ((labelSegment / 2) * pathLength));
+
+    //user defined run parameters (time in seconds):
+    const warmup = 300;
+    const sprint = 40;
+    const rest = 60;
+    const sprintCount = 5;
+
+    //tally up
+    const runLength = ((sprintCount * (rest + sprint))) + (2 * warmup) - rest;
+
+    //what to multiply everything by so that it's offset properly on the circle
+    const lengthMultiplier = (runLength / pathLength);
+
+
+    console.log("pathLength", pathLength);
+    console.log("offset", offset);
+    console.log("runLength", runLength);
+    console.log("lengthMultiplier", lengthMultiplier);
+
     return(
         <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">
 
 
 
     <circle
-            cx="50%" cy="50%" r="90"
+            cx="50%" cy="50%" r={radius}
             stroke="green"
             stroke-width="20"
             fill="none" />
 
 
     <circle
-            cx="50%" cy="50%" r="90"
+            cx="50%" cy="50%" r={radius}
             stroke="red"
             stroke-width="20"
             fill="none"
-            stroke-dasharray="5% 10%"
+            stroke-dasharray={[(-1 * offset), warmup, sprint, rest, sprint, rest, sprint, rest, sprint, rest, sprint, warmup].map((x, index) => index===0? x : (x / lengthMultiplier))}
+            stroke-dashoffset={[1.5 * offset]}
             />
 
 
     <circle
-            cx="50%" cy="50%" r="90"
+            cx="50%" cy="50%" r={radius}
             stroke="blue"
             stroke-width="20"
             fill="none"
-            stroke-dashoffset="100"
-            stroke-dasharray="282 282"
+            stroke-dashoffset={[offset]}
+            stroke-dasharray={[labelSegment, 1 - labelSegment].map(l => l * pathLength)}
     />
 
 </svg>
@@ -36,10 +75,6 @@ export default component$(() => {
     )
 
 });
-
-//parameters need to be numbers otherwise can't be used in calculations
-//can turn them back into strings later
-
 
 interface CircleParameters {
 
