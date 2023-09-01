@@ -21,23 +21,32 @@ export default component$(({labelSegment = 0.3}: CircleProps) => {
     const pathLength = radius * 2 * Math.PI;
     const offset = ((-0.25 * pathLength) + ((labelSegment / 2) * pathLength));
 
-    //user defined run parameters (time in seconds):
+    //user defined run parameters
     const warmup = 300;
     const sprint = 40;
     const rest = 60;
     const sprintCount = 5;
-
-    //tally up
-    const runLength = ((sprintCount * (rest + sprint))) + (2 * warmup) - rest;
-
-    //what to multiply everything by so that it's offset properly on the circle
-    const lengthMultiplier = (runLength / pathLength);
-
+    //need to type warmup, sprint and rest as something other than numbers
 
     console.log("pathLength", pathLength);
     console.log("offset", offset);
-    console.log("runLength", runLength);
-    console.log("lengthMultiplier", lengthMultiplier);
+
+    //add it all up to 1
+    //eg. label segment = 0.4
+    //(2 * warmup) + (sprintCount * sprint) - ((sprintCount - 1) * rest) = (1 - labelSegment) * pathLength
+
+
+    //how much path is left after the labelSegment is accounted for
+    const pathRemainder = (1 - labelSegment) * pathLength
+    console.log("pathRemainder", pathRemainder)
+
+    //tally up how many seconds the run will last
+    const sumSeconds = (2 * warmup) + (sprintCount * (sprint + rest)) - ((sprintCount - 1) * rest)
+    console.log("sumSeconds", sumSeconds)
+
+    //divide remaining space by length of run
+    const squeezeDown = (pathRemainder / sumSeconds)
+    console.log("squeezeDown", squeezeDown)
 
     return(
         <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">
@@ -46,7 +55,7 @@ export default component$(({labelSegment = 0.3}: CircleProps) => {
 
     <circle
             cx="50%" cy="50%" r={radius}
-            stroke="green"
+            stroke="none"
             stroke-width="20"
             fill="none" />
 
@@ -56,15 +65,15 @@ export default component$(({labelSegment = 0.3}: CircleProps) => {
             stroke="red"
             stroke-width="20"
             fill="none"
-            stroke-dasharray={[(-1 * offset), warmup, sprint, rest, sprint, rest, sprint, rest, sprint, rest, sprint, warmup].map((x, index) => index===0? x : (x / lengthMultiplier))}
-            stroke-dashoffset={[1.5 * offset]}
+            stroke-dasharray={[(labelSegment * pathLength), warmup, sprint, rest, sprint, rest, sprint, rest, sprint, rest, sprint, warmup].map((x, index) => index===0? x : x * squeezeDown)}
+            stroke-dashoffset={[offset]}
             />
 
 
     <circle
             cx="50%" cy="50%" r={radius}
             stroke="blue"
-            stroke-width="20"
+            stroke-width="5"
             fill="none"
             stroke-dashoffset={[offset]}
             stroke-dasharray={[labelSegment, 1 - labelSegment].map(l => l * pathLength)}
