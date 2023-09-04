@@ -15,13 +15,13 @@ interface CircleProps {
 //   colour: string;
 // }
 
-export default component$(({ labelSegment = 0.4 }: CircleProps) => {
+export default component$(({ labelSegment = 0.25}: CircleProps) => {
   const radius = 90;
   const circumference = radius * 2 * Math.PI;
   const workoutPathLength = (1 - labelSegment) * circumference;
 
   //user defined run parameters
-  const warmup = 200;
+  const warmup = 120;
   const sprint = 40;
   const rest = 60;
   const sprintCount = 5;
