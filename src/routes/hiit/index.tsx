@@ -4,18 +4,87 @@ interface CircleProps {
   labelSegment: number; // 0 -> 1
 }
 
-// interval = sprint + rest
-// "workout" = warmup + cooldown + intervals
+interface IntervalProps {
+  labelsize: number;
+  restcolour: string;
+  sprintcolour: string;
+  labelcolour: string;
+  radius: number;
+  restduration: number;
+  sprintduration: number;
+  intervalcount: number;
+  warmupduration: number;
+  svgwidth: number;
+  svgheight: number;
+  strokewidth: number;
+}
 
-// interface Arc {
-//   radius: number;
-//   start: number; // 0 -> 1, 0 == 6 O'Clock
-//   end: number;
-//   width: number;
-//   colour: string;
-// }
+export const Interval = component$(
+  ({
+    labelsize = 0.3,
+    restcolour = 'green',
+    sprintcolour = 'red',
+    restduration = 40,
+    sprintduration = 60,
+    radius = 90,
+    intervalcount = 5,
+    warmupduration = 150,
+    labelcolour = 'blue',
+    svgwidth = 300,
+    svgheight = 300,
+    strokewidth = 20,
+  }: IntervalProps) => {
+    const workoutduration = 2 * warmupduration + intervalcount * (sprintduration + restduration) - restduration;
+    const circumference = radius * Math.PI * 2;
+    const workoutdisplay = (1 - labelsize) * circumference;
+    const warmupsegment = workoutdisplay * (warmupduration / workoutduration);
+    const sprintsegment = workoutdisplay * (sprintduration / workoutduration);
+    const restsegment = workoutdisplay * (sprintduration / workoutduration);
+    const centrewidth = svgwidth / 2;
+    const centreheight = svgheight / 2;
+    const labelstartangle = 90 - (labelsize / 2) * 360;
+    const warmupstartangle = 90 + (labelsize / 2) * 360;
+    const cooldownstartangle = labelstartangle - (warmupsegment / circumference) * 360;
 
-export default component$(({ labelSegment = 0.25}: CircleProps) => {
+    return (
+      <svg xmlns="http://www.w3.org/2000/svg" width={svgwidth} height={svgheight}>
+        <circle
+          cx="50%"
+          cy="50%"
+          r={radius}
+          stroke={labelcolour}
+          stroke-width={strokewidth}
+          fill="none"
+          transform={`rotate(${labelstartangle}, ${centrewidth}, ${centreheight}`}
+        />
+
+        <circle
+          cx="50%"
+          cy="50%"
+          r={radius}
+          stroke={restcolour}
+          stroke-width={strokewidth}
+          fill="none"
+          transform={`rotate(${warmupstartangle}, ${centrewidth}, ${centreheight}`}
+          stroke-dasharray={[warmupsegment, circumference - warmupsegment]}
+        />
+
+        <circle
+          cx="50%"
+          cy="50%"
+          r={radius}
+          stroke={restcolour}
+          stroke-width={strokewidth}
+          fill="none"
+          transform={`rotate(${cooldownstartangle}, ${centrewidth}, ${centreheight}`}
+          stroke-dasharray={[warmupsegment, circumference - warmupsegment]}
+        />
+      </svg>
+    );
+  },
+);
+
+export default component$(({ labelSegment = 0.25 }: CircleProps) => {
   const radius = 90;
   const circumference = radius * 2 * Math.PI;
   const workoutPathLength = (1 - labelSegment) * circumference;
