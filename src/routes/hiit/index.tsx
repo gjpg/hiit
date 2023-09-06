@@ -5,18 +5,20 @@ interface CircleProps {
 }
 
 interface IntervalProps {
-  labelsize: number;
-  restcolour: string;
-  sprintcolour: string;
-  labelcolour: string;
-  radius: number;
-  restduration: number;
-  sprintduration: number;
-  intervalcount: number;
-  warmupduration: number;
-  svgwidth: number;
-  svgheight: number;
-  strokewidth: number;
+  labelsize?: number;
+  restcolour?: string;
+  sprintcolour?: string;
+  labelcolour?: string;
+  radius?: number;
+  restduration?: number;
+  sprintduration?: number;
+  workoutduration?: number;
+  intervalcount?: number;
+  warmupduration?: number;
+  svgwidth?: number;
+  svgheight?: number;
+  strokewidth?: number;
+  intervalIndex?: number;
 }
 
 export const Interval = component$(
@@ -27,35 +29,46 @@ export const Interval = component$(
     restduration = 40,
     sprintduration = 60,
     radius = 90,
-    intervalcount = 5,
     warmupduration = 150,
+    intervalcount = 5,
     labelcolour = 'blue',
     svgwidth = 300,
     svgheight = 300,
     strokewidth = 20,
+    intervalIndex = 0,
   }: IntervalProps) => {
-    const workoutduration = 2 * warmupduration + intervalcount * (sprintduration + restduration) - restduration;
     const circumference = radius * Math.PI * 2;
     const workoutdisplay = (1 - labelsize) * circumference;
+    const workoutduration = 2 * warmupduration + intervalcount * (restduration + sprintduration) - restduration;
+
+    const exerciseProgramAngle = (1 - labelsize) * 360;
+    const degreesPerSecond = exerciseProgramAngle / workoutduration;
+    const intervalDegrees = degreesPerSecond * (restduration + sprintduration);
     const warmupsegment = workoutdisplay * (warmupduration / workoutduration);
     const sprintsegment = workoutdisplay * (sprintduration / workoutduration);
-    const restsegment = workoutdisplay * (sprintduration / workoutduration);
+    const restsegment = workoutdisplay * (restduration / workoutduration);
     const centrewidth = svgwidth / 2;
     const centreheight = svgheight / 2;
     const labelstartangle = 90 - (labelsize / 2) * 360;
     const warmupstartangle = 90 + (labelsize / 2) * 360;
     const cooldownstartangle = labelstartangle - (warmupsegment / circumference) * 360;
+    const sprintstartangle =
+      warmupstartangle + (360 * warmupduration * (1 - labelsize)) / workoutduration + intervalDegrees * intervalIndex;
+    const reststartangle = sprintstartangle + (360 * sprintduration * (1 - labelsize)) / workoutduration;
+    const intervalSegment =
+      reststartangle + (360 * restduration * (1 - labelsize)) / workoutduration - sprintstartangle;
 
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" width={svgwidth} height={svgheight}>
+      <>
         <circle
           cx="50%"
           cy="50%"
           r={radius}
-          stroke={labelcolour}
+          stroke={sprintcolour}
           stroke-width={strokewidth}
           fill="none"
-          transform={`rotate(${labelstartangle}, ${centrewidth}, ${centreheight}`}
+          transform={`rotate(${sprintstartangle}, ${centrewidth}, ${centreheight})`}
+          stroke-dasharray={[sprintsegment, circumference - sprintsegment]}
         />
 
         <circle
@@ -65,35 +78,24 @@ export const Interval = component$(
           stroke={restcolour}
           stroke-width={strokewidth}
           fill="none"
-          transform={`rotate(${warmupstartangle}, ${centrewidth}, ${centreheight}`}
-          stroke-dasharray={[warmupsegment, circumference - warmupsegment]}
+          transform={`rotate(${reststartangle}, ${centrewidth}, ${centreheight})`}
+          stroke-dasharray={[restsegment, circumference - restsegment]}
         />
-
-        <circle
-          cx="50%"
-          cy="50%"
-          r={radius}
-          stroke={restcolour}
-          stroke-width={strokewidth}
-          fill="none"
-          transform={`rotate(${cooldownstartangle}, ${centrewidth}, ${centreheight}`}
-          stroke-dasharray={[warmupsegment, circumference - warmupsegment]}
-        />
-      </svg>
+      </>
     );
   },
 );
 
-export default component$(({ labelSegment = 0.25 }: CircleProps) => {
+export default component$(({ labelSegment = 0.3 }: CircleProps) => {
   const radius = 90;
   const circumference = radius * 2 * Math.PI;
   const workoutPathLength = (1 - labelSegment) * circumference;
 
   //user defined run parameters
-  const warmup = 120;
-  const sprint = 40;
-  const rest = 60;
-  const sprintCount = 5;
+  const warmup = 150;
+  const sprint = 60;
+  const rest = 40;
+  const sprintCount = 6;
 
   console.log('circumference', circumference);
 
@@ -127,7 +129,7 @@ export default component$(({ labelSegment = 0.25 }: CircleProps) => {
         cx="50%"
         cy="50%"
         r={radius}
-        stroke="yellow"
+        stroke="green"
         stroke-width="20"
         fill="none"
         transform={`rotate(${winddownAngle}, 150, 150)`}
@@ -139,11 +141,17 @@ export default component$(({ labelSegment = 0.25 }: CircleProps) => {
         cy="50%"
         r={radius}
         stroke="blue"
-        stroke-width="10"
+        stroke-width="20"
         fill="none"
         transform={`rotate(${labelAngle}, 150, 150)`}
         stroke-dasharray={[labelSegment, 1 - labelSegment].map((l) => l * circumference)}
       />
+
+      <>
+        {new Array(sprintCount).fill(0).map((_, index) => (
+          <Interval intervalIndex={index} />
+        ))}
+      </>
     </svg>
   );
 });
