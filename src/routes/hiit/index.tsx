@@ -1,7 +1,4 @@
-import { component$, useStore, useContext, useContextProvider, createContextId } from '@builder.io/qwik';
-
-interface CircleProps {}
-
+import { component$, useStore, useContext, useContextProvider, createContextId, $, QRL } from '@builder.io/qwik';
 interface IntervalContext {
   labelSize: number;
   restColour: string;
@@ -37,23 +34,19 @@ export const Interval = component$(({ intervalIndex }: IndexProps) => {
     svgWidth,
     svgHeight,
     strokeWidth,
-  } = useContext(InputContext);
+    circumference,
+    degreesPerSecond,
+    centreWidth,
+    centreHeight,
+    workoutDuration,
+    warmupStartAngle,
+  } = useHIITContext();
 
-  //why do we need to list this out again on line 102?
-
-  const circumference = radius * Math.PI * 2;
   const workoutDisplay = (1 - labelSize) * circumference;
-  const workoutDuration = 2 * warmupDuration + intervalCount * (restDuration + sprintDuration) - restDuration;
-  const exerciseProgramAngle = (1 - labelSize) * 360;
-  const degreesPerSecond = exerciseProgramAngle / workoutDuration;
+  //^reused
   const intervalDegrees = degreesPerSecond * (restDuration + sprintDuration);
-  const warmupSegment = workoutDisplay * (warmupDuration / workoutDuration);
   const sprintSegment = workoutDisplay * (sprintDuration / workoutDuration);
   const restSegment = workoutDisplay * (restDuration / workoutDuration);
-  const centreWidth = svgWidth / 2;
-  const centreHeight = svgHeight / 2;
-  const labelStartAngle = 90 - (labelSize / 2) * 360;
-  const warmupStartAngle = 90 + (labelSize / 2) * 360;
   const sprintStartAngle =
     warmupStartAngle + (360 * warmupDuration * (1 - labelSize)) / workoutDuration + intervalDegrees * intervalIndex;
   const restStartAngle = sprintStartAngle + (360 * sprintDuration * (1 - labelSize)) / workoutDuration;
@@ -85,39 +78,24 @@ export const Interval = component$(({ intervalIndex }: IndexProps) => {
   );
 });
 
-//removed time from the component because it broke the site. replaced it with intervalIndex (not sure if that's what was there before time)
-export const Rest = component$(({ intervalIndex }: IndexProps) => {
+export const WarmupCooldown = component$(({ intervalIndex }: IndexProps) => {
   const {
     labelSize,
     restColour,
-    sprintColour,
-    restDuration,
-    sprintDuration,
     radius,
     warmupDuration,
-    intervalCount,
-    labelColour,
-    svgWidth,
-    svgHeight,
     strokeWidth,
-  } = useContext(InputContext);
+    labelStartAngle,
+    circumference,
+    centreWidth,
+    centreHeight,
+    workoutDuration,
+    warmupStartAngle,
+  } = useHIITContext();
 
-  const circumference = radius * Math.PI * 2;
   const workoutDisplay = (1 - labelSize) * circumference;
-  const workoutDuration = 2 * warmupDuration + intervalCount * (restDuration + sprintDuration) - restDuration;
-  const exerciseProgramAngle = (1 - labelSize) * 360;
-  const degreesPerSecond = exerciseProgramAngle / workoutDuration;
-  const intervalDegrees = degreesPerSecond * (restDuration + sprintDuration);
   const warmupSegment = workoutDisplay * (warmupDuration / workoutDuration);
-  const sprintSegment = workoutDisplay * (sprintDuration / workoutDuration);
-  const restSegment = workoutDisplay * (restDuration / workoutDuration);
-  const centreWidth = svgWidth / 2;
-  const centreHeight = svgHeight / 2;
-  const labelStartAngle = 90 - (labelSize / 2) * 360;
-  const warmupStartAngle = 90 + (labelSize / 2) * 360;
-  const sprintStartAngle =
-    warmupStartAngle + (360 * warmupDuration * (1 - labelSize)) / workoutDuration + intervalDegrees * intervalIndex;
-  const restStartAngle = sprintStartAngle + (360 * sprintDuration * (1 - labelSize)) / workoutDuration;
+  const cooldownStartAngle = labelStartAngle - (warmupSegment / circumference) * 360;
 
   return (
     <>
@@ -125,11 +103,11 @@ export const Rest = component$(({ intervalIndex }: IndexProps) => {
         cx="50%"
         cy="50%"
         r={radius}
-        stroke={sprintColour}
+        stroke={restColour}
         stroke-width={strokeWidth}
         fill="none"
-        transform={`rotate(${sprintStartAngle}, ${centreWidth}, ${centreHeight})`}
-        stroke-dasharray={[sprintSegment, circumference - sprintSegment]}
+        transform={`rotate(${warmupStartAngle}, ${centreWidth}, ${centreHeight})`}
+        stroke-dasharray={[warmupSegment, circumference - warmupSegment]}
       />
 
       <circle
@@ -139,10 +117,51 @@ export const Rest = component$(({ intervalIndex }: IndexProps) => {
         stroke={restColour}
         stroke-width={strokeWidth}
         fill="none"
-        transform={`rotate(${restStartAngle}, ${centreWidth}, ${centreHeight})`}
-        stroke-dasharray={[restSegment, circumference - restSegment]}
+        transform={`rotate(${cooldownStartAngle}, ${centreWidth}, ${centreHeight})`}
+        stroke-dasharray={[warmupSegment, circumference - warmupSegment]}
       />
     </>
+  );
+});
+
+function useHIITContext() {
+  const ctx = useContext(InputContext);
+  const { radius, warmupDuration, intervalCount, restDuration, sprintDuration, labelSize, svgWidth, svgHeight } = ctx;
+  const workoutDuration = 2 * warmupDuration + intervalCount * (restDuration + sprintDuration) - restDuration;
+  const exerciseProgramAngle = (1 - labelSize) * 360;
+  const degreesPerSecond = exerciseProgramAngle / workoutDuration;
+  const centreWidth = svgWidth / 2;
+  const centreHeight = svgHeight / 2;
+  const labelStartAngle = 90 - (labelSize / 2) * 360;
+  const warmupStartAngle = 90 + (labelSize / 2) * 360;
+
+  return {
+    ...ctx,
+    circumference: radius * Math.PI * 2,
+    workoutDuration,
+    degreesPerSecond,
+    centreWidth,
+    centreHeight,
+    labelStartAngle,
+    warmupStartAngle,
+  };
+}
+
+export const Label = component$(({}) => {
+  const { radius, labelColour, strokeWidth, labelSize, circumference, centreWidth, centreHeight, labelStartAngle } =
+    useHIITContext();
+
+  return (
+    <circle
+      cx="50%"
+      cy="50%"
+      r={radius}
+      stroke={labelColour}
+      stroke-width={strokeWidth}
+      fill="none"
+      transform={`rotate(${labelStartAngle}, ${centreWidth}, ${centreHeight})`}
+      stroke-dasharray={[labelSize, 1 - labelSize].map((l) => l * circumference)}
+    />
   );
 });
 
@@ -170,7 +189,7 @@ export default component$(() => {
     radius: 90,
     warmupDuration: 150,
     intervalCount: 5,
-    labelColour: 'yellow',
+    labelColour: 'blue',
     svgWidth: 300,
     svgHeight: 300,
     strokeWidth: 20,
@@ -224,4 +243,8 @@ export default component$(() => {
   );
 });
 
-//why does Interval on line 220 cause weird error in the console
+// TO DO
+// Put all reused variables in useHIITContext
+// Sort out labelSize and intervalCount so that everything can be DRYed
+// Maybe find a way to give all circles the same cx and cy variable, so that they don't necessarily need to be centred
+// Time
