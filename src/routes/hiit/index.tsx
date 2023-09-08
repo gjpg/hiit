@@ -1,157 +1,227 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useStore, useContext, useContextProvider, createContextId } from '@builder.io/qwik';
 
-interface CircleProps {
-  labelSegment: number; // 0 -> 1
+interface CircleProps {}
+
+interface IntervalContext {
+  labelSize: number;
+  restColour: string;
+  sprintColour: string;
+  labelColour: string;
+  radius: number;
+  restDuration: number;
+  sprintDuration: number;
+  workoutDuration: number;
+  intervalCount: number;
+  warmupDuration: number;
+  svgWidth: number;
+  svgHeight: number;
+  strokeWidth: number;
 }
 
-interface IntervalProps {
-  labelsize?: number;
-  restcolour?: string;
-  sprintcolour?: string;
-  labelcolour?: string;
-  radius?: number;
-  restduration?: number;
-  sprintduration?: number;
-  workoutduration?: number;
-  intervalcount?: number;
-  warmupduration?: number;
-  svgwidth?: number;
-  svgheight?: number;
-  strokewidth?: number;
-  intervalIndex?: number;
+interface IndexProps {
+  intervalIndex: number;
 }
+export const InputContext = createContextId<IntervalContext>('docs.theme-context');
 
-export const Interval = component$(
-  ({
-    labelsize = 0.3,
-    restcolour = 'green',
-    sprintcolour = 'red',
-    restduration = 40,
-    sprintduration = 60,
-    radius = 90,
-    warmupduration = 150,
-    intervalcount = 5,
-    labelcolour = 'blue',
-    svgwidth = 300,
-    svgheight = 300,
-    strokewidth = 20,
-    intervalIndex = 0,
-  }: IntervalProps) => {
-    const circumference = radius * Math.PI * 2;
-    const workoutdisplay = (1 - labelsize) * circumference;
-    const workoutduration = 2 * warmupduration + intervalcount * (restduration + sprintduration) - restduration;
+export const Interval = component$(({ intervalIndex }: IndexProps) => {
+  const {
+    labelSize,
+    restColour,
+    sprintColour,
+    restDuration,
+    sprintDuration,
+    radius,
+    warmupDuration,
+    intervalCount,
+    labelColour,
+    svgWidth,
+    svgHeight,
+    strokeWidth,
+  } = useContext(InputContext);
 
-    const exerciseProgramAngle = (1 - labelsize) * 360;
-    const degreesPerSecond = exerciseProgramAngle / workoutduration;
-    const intervalDegrees = degreesPerSecond * (restduration + sprintduration);
-    const warmupsegment = workoutdisplay * (warmupduration / workoutduration);
-    const sprintsegment = workoutdisplay * (sprintduration / workoutduration);
-    const restsegment = workoutdisplay * (restduration / workoutduration);
-    const centrewidth = svgwidth / 2;
-    const centreheight = svgheight / 2;
-    const labelstartangle = 90 - (labelsize / 2) * 360;
-    const warmupstartangle = 90 + (labelsize / 2) * 360;
-    const cooldownstartangle = labelstartangle - (warmupsegment / circumference) * 360;
-    const sprintstartangle =
-      warmupstartangle + (360 * warmupduration * (1 - labelsize)) / workoutduration + intervalDegrees * intervalIndex;
-    const reststartangle = sprintstartangle + (360 * sprintduration * (1 - labelsize)) / workoutduration;
-    const intervalSegment =
-      reststartangle + (360 * restduration * (1 - labelsize)) / workoutduration - sprintstartangle;
+  //why do we need to list this out again on line 102?
 
-    return (
-      <>
-        <circle
-          cx="50%"
-          cy="50%"
-          r={radius}
-          stroke={sprintcolour}
-          stroke-width={strokewidth}
-          fill="none"
-          transform={`rotate(${sprintstartangle}, ${centrewidth}, ${centreheight})`}
-          stroke-dasharray={[sprintsegment, circumference - sprintsegment]}
-        />
+  const circumference = radius * Math.PI * 2;
+  const workoutDisplay = (1 - labelSize) * circumference;
+  const workoutDuration = 2 * warmupDuration + intervalCount * (restDuration + sprintDuration) - restDuration;
+  const exerciseProgramAngle = (1 - labelSize) * 360;
+  const degreesPerSecond = exerciseProgramAngle / workoutDuration;
+  const intervalDegrees = degreesPerSecond * (restDuration + sprintDuration);
+  const warmupSegment = workoutDisplay * (warmupDuration / workoutDuration);
+  const sprintSegment = workoutDisplay * (sprintDuration / workoutDuration);
+  const restSegment = workoutDisplay * (restDuration / workoutDuration);
+  const centreWidth = svgWidth / 2;
+  const centreHeight = svgHeight / 2;
+  const labelStartAngle = 90 - (labelSize / 2) * 360;
+  const warmupStartAngle = 90 + (labelSize / 2) * 360;
+  const sprintStartAngle =
+    warmupStartAngle + (360 * warmupDuration * (1 - labelSize)) / workoutDuration + intervalDegrees * intervalIndex;
+  const restStartAngle = sprintStartAngle + (360 * sprintDuration * (1 - labelSize)) / workoutDuration;
 
-        <circle
-          cx="50%"
-          cy="50%"
-          r={radius}
-          stroke={restcolour}
-          stroke-width={strokewidth}
-          fill="none"
-          transform={`rotate(${reststartangle}, ${centrewidth}, ${centreheight})`}
-          stroke-dasharray={[restsegment, circumference - restsegment]}
-        />
-      </>
-    );
-  },
-);
+  return (
+    <>
+      <circle
+        cx="50%"
+        cy="50%"
+        r={radius}
+        stroke={sprintColour}
+        stroke-width={strokeWidth}
+        fill="none"
+        transform={`rotate(${sprintStartAngle}, ${centreWidth}, ${centreHeight})`}
+        stroke-dasharray={[sprintSegment, circumference - sprintSegment]}
+      />
 
-export default component$(({ labelSegment = 0.3 }: CircleProps) => {
+      <circle
+        cx="50%"
+        cy="50%"
+        r={radius}
+        stroke={restColour}
+        stroke-width={strokeWidth}
+        fill="none"
+        transform={`rotate(${restStartAngle}, ${centreWidth}, ${centreHeight})`}
+        stroke-dasharray={[restSegment, circumference - restSegment]}
+      />
+    </>
+  );
+});
+
+//removed time from the component because it broke the site. replaced it with intervalIndex (not sure if that's what was there before time)
+export const Rest = component$(({ intervalIndex }: IndexProps) => {
+  const {
+    labelSize,
+    restColour,
+    sprintColour,
+    restDuration,
+    sprintDuration,
+    radius,
+    warmupDuration,
+    intervalCount,
+    labelColour,
+    svgWidth,
+    svgHeight,
+    strokeWidth,
+  } = useContext(InputContext);
+
+  const circumference = radius * Math.PI * 2;
+  const workoutDisplay = (1 - labelSize) * circumference;
+  const workoutDuration = 2 * warmupDuration + intervalCount * (restDuration + sprintDuration) - restDuration;
+  const exerciseProgramAngle = (1 - labelSize) * 360;
+  const degreesPerSecond = exerciseProgramAngle / workoutDuration;
+  const intervalDegrees = degreesPerSecond * (restDuration + sprintDuration);
+  const warmupSegment = workoutDisplay * (warmupDuration / workoutDuration);
+  const sprintSegment = workoutDisplay * (sprintDuration / workoutDuration);
+  const restSegment = workoutDisplay * (restDuration / workoutDuration);
+  const centreWidth = svgWidth / 2;
+  const centreHeight = svgHeight / 2;
+  const labelStartAngle = 90 - (labelSize / 2) * 360;
+  const warmupStartAngle = 90 + (labelSize / 2) * 360;
+  const sprintStartAngle =
+    warmupStartAngle + (360 * warmupDuration * (1 - labelSize)) / workoutDuration + intervalDegrees * intervalIndex;
+  const restStartAngle = sprintStartAngle + (360 * sprintDuration * (1 - labelSize)) / workoutDuration;
+
+  return (
+    <>
+      <circle
+        cx="50%"
+        cy="50%"
+        r={radius}
+        stroke={sprintColour}
+        stroke-width={strokeWidth}
+        fill="none"
+        transform={`rotate(${sprintStartAngle}, ${centreWidth}, ${centreHeight})`}
+        stroke-dasharray={[sprintSegment, circumference - sprintSegment]}
+      />
+
+      <circle
+        cx="50%"
+        cy="50%"
+        r={radius}
+        stroke={restColour}
+        stroke-width={strokeWidth}
+        fill="none"
+        transform={`rotate(${restStartAngle}, ${centreWidth}, ${centreHeight})`}
+        stroke-dasharray={[restSegment, circumference - restSegment]}
+      />
+    </>
+  );
+});
+
+export default component$(() => {
+  const labelSize = 0.3;
   const radius = 90;
   const circumference = radius * 2 * Math.PI;
-  const workoutPathLength = (1 - labelSegment) * circumference;
+  const workoutPathLength = (1 - labelSize) * circumference;
+  const warmupDuration = 150;
+  const sprintDuration = 60;
+  const restDuration = 40;
+  const intervalCount = 5;
+  const workoutDuration = 2 * warmupDuration + intervalCount * (sprintDuration + restDuration) - restDuration;
+  const labelStartAngle = 90 - (labelSize / 2) * 360;
+  const warmupStartAngle = 90 + (labelSize / 2) * 360;
+  const warmupSegment = workoutPathLength * (warmupDuration / workoutDuration);
+  const cooldownStartAngle = labelStartAngle - (warmupSegment / circumference) * 360;
 
-  //user defined run parameters
-  const warmup = 150;
-  const sprint = 60;
-  const rest = 40;
-  const sprintCount = 6;
+  const state = useStore<IntervalContext>({
+    labelSize: labelSize,
+    restColour: 'green',
+    sprintColour: 'red',
+    restDuration: 40,
+    sprintDuration: 60,
+    radius: 90,
+    warmupDuration: 150,
+    intervalCount: 5,
+    labelColour: 'yellow',
+    svgWidth: 300,
+    svgHeight: 300,
+    strokeWidth: 20,
+    workoutDuration: 2 * warmupDuration + intervalCount * (restDuration + sprintDuration) - restDuration,
+  });
 
-  console.log('circumference', circumference);
-
-  //tally up how many seconds the run will last
-  const sumSeconds = 2 * warmup + sprintCount * (sprint + rest) - rest;
-  // const sumSeconds = 400;
-  console.log('sumSeconds', sumSeconds);
-
-  const labelAngle = 90 - (labelSegment / 2) * 360;
-  const warmupAngle = 90 + (labelSegment / 2) * 360;
-  const warmupLength = workoutPathLength * (warmup / sumSeconds);
-  console.log('warmupLength', warmupLength);
-  const winddownAngle = labelAngle - (warmupLength / circumference) * 360;
+  useContextProvider(InputContext, state);
 
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">
-      <circle cx="50%" cy="50%" r={radius} stroke="none" stroke-width="20" fill="none" />
-
+      <Rest time={0} />
       <circle
         cx="50%"
         cy="50%"
-        r={radius}
-        stroke="green"
-        stroke-width="20"
+        r={state.radius}
+        stroke={state.restColour}
+        stroke-width={state.strokeWidth}
         fill="none"
-        transform={`rotate(${warmupAngle}, 150, 150)`}
-        stroke-dasharray={[warmupLength, circumference - warmupLength]}
+        transform={`rotate(${warmupStartAngle}, 150, 150)`}
+        stroke-dasharray={[warmupSegment, circumference - warmupSegment]}
       />
 
       <circle
         cx="50%"
         cy="50%"
-        r={radius}
-        stroke="green"
-        stroke-width="20"
+        r={state.radius}
+        stroke={state.restColour}
+        stroke-width={state.strokeWidth}
         fill="none"
-        transform={`rotate(${winddownAngle}, 150, 150)`}
-        stroke-dasharray={[warmupLength, circumference - warmupLength]}
+        transform={`rotate(${cooldownStartAngle}, 150, 150)`}
+        stroke-dasharray={[warmupSegment, circumference - warmupSegment]}
       />
 
       <circle
         cx="50%"
         cy="50%"
-        r={radius}
-        stroke="blue"
-        stroke-width="20"
+        r={state.radius}
+        stroke={state.labelColour}
+        stroke-width={state.strokeWidth}
         fill="none"
-        transform={`rotate(${labelAngle}, 150, 150)`}
-        stroke-dasharray={[labelSegment, 1 - labelSegment].map((l) => l * circumference)}
+        transform={`rotate(${labelStartAngle}, 150, 150)`}
+        stroke-dasharray={[state.labelSize, 1 - state.labelSize].map((l) => l * circumference)}
       />
 
       <>
-        {new Array(sprintCount).fill(0).map((_, index) => (
+        {new Array(intervalCount).fill(0).map((_, index) => (
           <Interval intervalIndex={index} />
         ))}
       </>
     </svg>
   );
 });
+
+//why does Interval on line 220 cause weird error in the console
