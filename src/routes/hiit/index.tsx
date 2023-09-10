@@ -12,6 +12,8 @@ interface IntervalContext {
   svgWidth: number;
   svgHeight: number;
   strokeWidth: number;
+  cx: string;
+  cy: string;
 }
 
 interface IndexProps {
@@ -35,6 +37,8 @@ export const Interval = component$(({ intervalIndex }: IndexProps) => {
     centreHeight,
     workoutDuration,
     warmupStartAngle,
+    cx,
+    cy,
   } = useHIITContext();
 
   const workoutDisplay = (1 - labelSize) * circumference;
@@ -49,8 +53,8 @@ export const Interval = component$(({ intervalIndex }: IndexProps) => {
   return (
     <>
       <circle
-        cx="50%"
-        cy="50%"
+        cx={cx}
+        cy={cy}
         r={radius}
         stroke={sprintColour}
         stroke-width={strokeWidth}
@@ -121,7 +125,8 @@ export const WarmupCooldown = component$(({ intervalIndex }: IndexProps) => {
 
 function useHIITContext() {
   const ctx = useContext(InputContext);
-  const { radius, warmupDuration, intervalCount, restDuration, sprintDuration, labelSize, svgWidth, svgHeight } = ctx;
+  const { radius, warmupDuration, intervalCount, restDuration, sprintDuration, svgWidth, svgHeight } = ctx;
+  const labelSize = 0.3;
   const workoutDuration = 2 * warmupDuration + intervalCount * (restDuration + sprintDuration) - restDuration;
   const exerciseProgramAngle = (1 - labelSize) * 360;
   const degreesPerSecond = exerciseProgramAngle / workoutDuration;
@@ -132,6 +137,7 @@ function useHIITContext() {
 
   return {
     ...ctx,
+    labelSize,
     circumference: radius * Math.PI * 2,
     workoutDuration,
     degreesPerSecond,
@@ -148,8 +154,8 @@ export const Label = component$(({}) => {
 
   return (
     <circle
-      cx="50%"
-      cy="50%"
+      cx={cx}
+      cy={cy}
       r={radius}
       stroke={labelColour}
       stroke-width={strokeWidth}
@@ -161,13 +167,11 @@ export const Label = component$(({}) => {
 });
 
 export default component$(() => {
-  const labelSize = 0.3;
   const intervalCount = 5;
   //intervalCount defined ^ here and in state v
   //labelSize being defined ^ here means a bunch of stuff can't be DRYed out
 
   const state = useStore<IntervalContext>({
-    labelSize: labelSize,
     restColour: 'green',
     sprintColour: 'red',
     restDuration: 40,
@@ -179,6 +183,8 @@ export default component$(() => {
     svgWidth: 300,
     svgHeight: 300,
     strokeWidth: 20,
+    cx: '50%',
+    cy: '50%',
   });
 
   useContextProvider(InputContext, state);
