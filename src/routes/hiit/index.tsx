@@ -15,11 +15,34 @@ interface IntervalContext {
   cx: string;
   cy: string;
 }
-
-interface IntervalProps {
-  intervalIndex: number;
-}
 export const InputContext = createContextId<IntervalContext>('docs.theme-context');
+
+interface PointerProps {
+  angle: number;
+}
+export const Pointer = component$<PointerProps>(({ angle }) => {
+  const { cx, cy, centreWidth, centreHeight, radius } = useHIITContext();
+  return (
+    <line
+      x1={cx}
+      y1={cy}
+      x2={radius}
+      y2={cy}
+      stroke-width="5"
+      stroke="white"
+      transform={`rotate(${angle - 180}, ${centreWidth}, ${centreHeight})`}
+      fill="white"
+    />
+  );
+});
+
+export const TimePointer = component$<{ time: number }>(({ time }) => {
+  const { degreesPerSecond, labelSize } = useHIITContext();
+  const labelEndAngle = 90 + (360 * labelSize) / 2;
+  const startAngle = labelEndAngle + time * degreesPerSecond;
+
+  return <Pointer angle={startAngle} />;
+});
 
 interface ArcProps {
   startAngle: number; // 0 -> 360
@@ -27,32 +50,25 @@ interface ArcProps {
   width: number;
   colour: string;
 }
-export const Arc = component$<ArcProps>(({colour, endAngle, startAngle, width}) => {
-  const {
-    radius,
-    circumference,
-    centreWidth,
-    centreHeight,
-    cx,
-    cy,
-  } = useHIITContext();
-  const arcLength = circumference * (endAngle - startAngle) / 360;
+
+// given start and end angle, render an arc. Angles start at 3:00 O'Clock and are in degrees
+export const Arc = component$<ArcProps>(({ colour, endAngle, startAngle, width }) => {
+  const { radius, circumference, centreWidth, centreHeight, cx, cy } = useHIITContext();
+  const arcLength = (circumference * (endAngle - startAngle)) / 360;
 
   return (
-      <circle
-        onMouseover$={() => console.log('Hello')}
-        cx={cx}
-        cy={cy}
-        r={radius}
-        stroke={colour}
-        stroke-width={width}
-        fill="none"
-        transform={`rotate(${startAngle}, ${centreWidth}, ${centreHeight})`}
-        stroke-dasharray={[arcLength, circumference - arcLength]}
-      />
-  )
+    <circle
+      cx={cx}
+      cy={cy}
+      r={radius}
+      stroke={colour}
+      stroke-width={width}
+      fill="none"
+      transform={`rotate(${startAngle}, ${centreWidth}, ${centreHeight})`}
+      stroke-dasharray={[arcLength, circumference - arcLength]}
+    />
+  );
 });
-
 
 interface DurationProps {
   startTime: number;
@@ -61,158 +77,44 @@ interface DurationProps {
   colour: string;
 }
 
-export const Duration = component$<DurationProps>(({startTime, duration, colour, width}) => {
-  const {degreesPerSecond, labelSize} = useHIITContext();
-  const labelEndAngle = 90 + 360 * labelSize / 2
+// converts from time domain to the angle domain
+export const Duration = component$<DurationProps>(({ startTime, duration, colour, width }) => {
+  const { degreesPerSecond, labelSize } = useHIITContext();
+  const labelEndAngle = 90 + (360 * labelSize) / 2;
   const startAngle = labelEndAngle + startTime * degreesPerSecond;
 
-  return <Arc startAngle={startAngle} endAngle={startAngle + duration * degreesPerSecond} width={width} colour={colour} />
+  return (
+    <Arc startAngle={startAngle} endAngle={startAngle + duration * degreesPerSecond} width={width} colour={colour} />
+  );
 });
 
 export const Warmup = component$(() => {
-  const { warmupDuration, restColour, strokeWidth} = useHIITContext();
+  const { warmupDuration, restColour, strokeWidth } = useHIITContext();
 
-  return <Duration startTime={0} duration={warmupDuration} colour={restColour} width={strokeWidth}/>
+  return <Duration startTime={0} duration={warmupDuration} colour={restColour} width={strokeWidth} />;
 });
 
 export const CoolDown = component$(() => {
-  const { cooldownDuration, restColour, strokeWidth, restDuration, sprintDuration, warmupDuration} = useHIITContext();
+  const { cooldownDuration, restColour, strokeWidth, restDuration, sprintDuration, warmupDuration } = useHIITContext();
   const intervalsSoFar = restDuration.reduce((tally, current) => tally + current + sprintDuration, 0);
   const startTime = warmupDuration + intervalsSoFar;
 
-  return <Duration startTime={startTime} duration={cooldownDuration} colour={restColour} width={strokeWidth}/>
+  return <Duration startTime={startTime} duration={cooldownDuration} colour={restColour} width={strokeWidth} />;
 });
 
-
-export const Interval = component$(({index}: {index: number}) => {
-  const {sprintColour, restColour, sprintDuration, strokeWidth, restDuration, warmupDuration} = useHIITContext();
+export const Interval = component$(({ index }: { index: number }) => {
+  const { sprintColour, restColour, sprintDuration, strokeWidth, restDuration, warmupDuration } = useHIITContext();
   const intervalsSoFar = restDuration.slice(0, index).reduce((tally, current) => tally + current + sprintDuration, 0);
   const startTime = warmupDuration + intervalsSoFar;
 
   return (
     <>
       <Duration startTime={startTime} duration={sprintDuration} width={strokeWidth} colour={sprintColour} />
-      <Duration startTime={startTime + sprintDuration} duration={restDuration[index]} width={strokeWidth} colour={restColour} />
-    </>
-  )
-})
-
-// export const Interval = component$(({ intervalIndex }: IntervalProps) => {
-//   const {
-//     labelSize,
-//     restColour,
-//     sprintColour,
-//     restDuration,
-//     sprintDuration,
-//     radius,
-//     warmupDuration,
-//     strokeWidth,
-//     circumference,
-//     degreesPerSecond,
-//     centreWidth,
-//     centreHeight,
-//     workoutDuration,
-//     warmupStartAngle,
-//     cx,
-//     cy,
-//   } = useHIITContext();
-//
-//   const workoutDisplay = (1 - labelSize) * circumference;
-//   //^reused
-//   const intervalDegrees = degreesPerSecond * (restDuration[intervalIndex] + sprintDuration);
-//   // const sprintSegment = workoutDisplay * (sprintDuration / workoutDuration);
-//   const sprintSegment = sprintDuration * degreesPerSecond;
-//   // const restSegment = workoutDisplay * (restDuration[intervalIndex] / workoutDuration);
-//   const restSegment = restDuration[intervalIndex] * degreesPerSecond;
-//   const completedRests = restDuration.slice(0, intervalIndex);
-//   const sprintStartTime =
-//     warmupDuration +
-//     intervalIndex * sprintDuration +
-//     completedRests.reduce((tally, current) => tally + current + sprintDuration, 0);
-//
-//   //const sprintStartAngle =
-//   //  warmupStartAngle + (360 * warmupDuration * (1 - labelSize)) / workoutDuration + intervalDegrees * intervalIndex;
-//   const sprintStartAngle = warmupStartAngle + sprintStartTime * degreesPerSecond;
-//
-//   //const restStartAngle = sprintStartAngle + (360 * sprintDuration * (1 - labelSize)) / workoutDuration;
-//   const restStartAngle = sprintStartAngle + sprintDuration * degreesPerSecond;
-//
-//   return (
-//     <>
-//       <circle
-//         cx={cx}
-//         cy={cy}
-//         r={radius}
-//         stroke={sprintColour}
-//         stroke-width={strokeWidth - 5}
-//         fill="none"
-//         transform={`rotate(${sprintStartAngle}, ${centreWidth}, ${centreHeight})`}
-//         stroke-dasharray={[sprintSegment, circumference - sprintSegment]}
-//       />
-//
-//       <circle
-//         cx={cx}
-//         cy={cy}
-//         r={radius}
-//         // stroke={restColour}
-//         stroke="yellow"
-//         stroke-width={strokeWidth - 15}
-//         fill="none"
-//         transform={`rotate(${restStartAngle}, ${centreWidth}, ${centreHeight})`}
-//         stroke-dasharray={[restSegment, circumference - restSegment]}
-//       />
-//     </>
-//   );
-// });
-
-export const WarmupCooldown = component$(() => {
-  const {
-    labelSize,
-    restColour,
-    radius,
-    warmupDuration,
-    cooldownDuration,
-    strokeWidth,
-    labelStartAngle,
-    circumference,
-    centreWidth,
-    centreHeight,
-    workoutDuration,
-    warmupStartAngle,
-    degreesPerSecond,
-    cx,
-    cy,
-  } = useHIITContext();
-
-  const workoutDisplay = (1 - labelSize) * circumference;
-  // const warmupSegment = (workoutDisplay * (warmupDuration / workoutDuration)) / 0.7;
-  const warmupSegment = warmupStartAngle + warmupDuration * degreesPerSecond;
-  const cooldownSegment = (workoutDisplay * (cooldownDuration / workoutDuration)) / 0.7;
-  const cooldownStartAngle = labelStartAngle - (warmupSegment / circumference) * 360;
-
-  return (
-    <>
-      <circle
-        cx={cx}
-        cy={cy}
-        r={radius}
-        stroke={restColour}
-        stroke-width={strokeWidth}
-        fill="none"
-        transform={`rotate(${warmupStartAngle}, ${centreWidth}, ${centreHeight})`}
-        stroke-dasharray={[warmupSegment, circumference - warmupSegment]}
-      />
-
-      <circle
-        cx={cx}
-        cy={cy}
-        r={radius}
-        // stroke={restColour}
-        stroke="purple"
-        stroke-width={strokeWidth}
-        fill="none"
-        transform={`rotate(${cooldownStartAngle}, ${centreWidth}, ${centreHeight})`}
-        stroke-dasharray={[warmupSegment, circumference - warmupSegment]}
+      <Duration
+        startTime={startTime + sprintDuration}
+        duration={restDuration[index]}
+        width={strokeWidth}
+        colour={restColour}
       />
     </>
   );
@@ -223,9 +125,7 @@ function useHIITContext() {
   const { radius, warmupDuration, cooldownDuration, restDuration, sprintDuration, svgWidth, svgHeight } = ctx;
   const labelSize = 0.3;
   const workoutDuration =
-    warmupDuration +
-    cooldownDuration +
-    restDuration.reduce((tally, current) => tally + current + sprintDuration, 0);
+    warmupDuration + cooldownDuration + restDuration.reduce((tally, current) => tally + current + sprintDuration, 0);
   const exerciseProgramAngle = (1 - labelSize) * 360;
   const degreesPerSecond = exerciseProgramAngle / workoutDuration;
   const centreWidth = svgWidth / 2;
@@ -233,7 +133,7 @@ function useHIITContext() {
   const labelStartAngle = 90 - (labelSize / 2) * 360;
   const warmupStartAngle = 90 + (labelSize / 2) * 360;
 
-  console.log({workoutDuration});
+  console.log({ workoutDuration });
 
   return {
     ...ctx,
@@ -296,30 +196,19 @@ export default component$(() => {
   useContextProvider(InputContext, state);
 
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox={`0, 0, ${state.svgWidth}, ${state.svgHeight}`}
+      width={state.svgWidth}
+      height={state.svgHeight}
+    >
       <Label />
       <Warmup />
       {new Array(state.restDuration.length).fill(0).map((_, index) => (
-          <Interval index={index} />
+        <Interval index={index} />
       ))}
-      <CoolDown />
-      {/*<Duration startTime={0} duration={state.cooldownDuration} width={state.strokeWidth} colour="green" />*/}
-      {/*<WarmupCooldown />*/}
-
-      {/*/!*<>*!/*/}
-      {/*/!*  {new Array(state.restDuration.length + 1).fill(0).map((_, index) => (*!/*/}
-      {/*/!*    <Interval intervalIndex={index} />*!/*/}
-      {/*/!*  ))}*!/*/}
-      {/*/!*</>*!/*/}
-      {/*<Interval intervalIndex={0} />*/}
-
-      {/*/!*<WarmupCooldown time={0} />*!/*/}
+      <CoolDown />`
+      <TimePointer time={300} />
     </svg>
   );
 });
-
-// TO DO
-// Put all reused variables in useHIITContext
-// Sort out labelSize and intervalCount so that everything can be DRYed
-// Maybe find a way to give all circles the same cx and cy variable, so that they don't necessarily need to be centred
-// Time
