@@ -8,6 +8,7 @@ interface IntervalContext {
   sprintDuration: number;
   intervalCount: number;
   warmupDuration: number;
+  cooldownDuration: number;
   svgWidth: number;
   svgHeight: number;
   strokeWidth: number;
@@ -29,6 +30,7 @@ export const Interval = component$(({ intervalIndex }: IndexProps) => {
     sprintDuration,
     radius,
     warmupDuration,
+    cooldownDuration,
     strokeWidth,
     circumference,
     degreesPerSecond,
@@ -82,6 +84,7 @@ export const WarmupCooldown = component$(({ intervalIndex }: IndexProps) => {
     restColour,
     radius,
     warmupDuration,
+    cooldownDuration,
     strokeWidth,
     labelStartAngle,
     circumference,
@@ -95,6 +98,7 @@ export const WarmupCooldown = component$(({ intervalIndex }: IndexProps) => {
 
   const workoutDisplay = (1 - labelSize) * circumference;
   const warmupSegment = workoutDisplay * (warmupDuration / workoutDuration);
+  const cooldownSegment = workoutDisplay * (cooldownDuration / workoutDuration);
   const cooldownStartAngle = labelStartAngle - (warmupSegment / circumference) * 360;
 
   return (
@@ -126,9 +130,11 @@ export const WarmupCooldown = component$(({ intervalIndex }: IndexProps) => {
 
 function useHIITContext() {
   const ctx = useContext(InputContext);
-  const { radius, warmupDuration, intervalCount, restDuration, sprintDuration, svgWidth, svgHeight } = ctx;
+  const { radius, warmupDuration, cooldownDuration, intervalCount, restDuration, sprintDuration, svgWidth, svgHeight } =
+    ctx;
   const labelSize = 0.3;
-  const workoutDuration = 2 * warmupDuration + intervalCount * (restDuration + sprintDuration) - restDuration;
+  const workoutDuration =
+    warmupDuration + cooldownDuration + intervalCount * (restDuration + sprintDuration) - restDuration;
   const exerciseProgramAngle = (1 - labelSize) * 360;
   const degreesPerSecond = exerciseProgramAngle / workoutDuration;
   const centreWidth = svgWidth / 2;
@@ -189,6 +195,7 @@ export default component$(() => {
     sprintDuration: 60,
     radius: 90,
     warmupDuration: 150,
+    cooldownDuration: 100,
     intervalCount: 5,
     labelColour: 'blue',
     svgWidth: 300,
