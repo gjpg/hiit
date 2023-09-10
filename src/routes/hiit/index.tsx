@@ -4,9 +4,8 @@ interface IntervalContext {
   sprintColour: string;
   labelColour: string;
   radius: number;
-  restDuration: number;
+  restDuration: number[];
   sprintDuration: number;
-  intervalCount: number;
   warmupDuration: number;
   cooldownDuration: number;
   svgWidth: number;
@@ -16,7 +15,7 @@ interface IntervalContext {
   cy: string;
 }
 
-interface IndexProps {
+interface IntervalProps {
   intervalIndex: number;
 }
 export const InputContext = createContextId<IntervalContext>('docs.theme-context');
@@ -103,6 +102,7 @@ export const WarmupCooldown = component$(() => {
     centreHeight,
     workoutDuration,
     warmupStartAngle,
+    degreesPerSecond,
     cx,
     cy,
   } = useHIITContext();
@@ -130,7 +130,8 @@ export const WarmupCooldown = component$(() => {
         cx={cx}
         cy={cy}
         r={radius}
-        stroke={restColour}
+        // stroke={restColour}
+        stroke="purple"
         stroke-width={strokeWidth}
         fill="none"
         transform={`rotate(${cooldownStartAngle}, ${centreWidth}, ${centreHeight})`}
@@ -201,7 +202,7 @@ export default component$(() => {
   const state = useStore<IntervalContext>({
     restColour: 'green',
     sprintColour: 'red',
-    restDuration: 40,
+    restDuration: [60, 60, 60, 60, 60],
     sprintDuration: 60,
     radius: 90,
     warmupDuration: 60,
