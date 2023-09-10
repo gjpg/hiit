@@ -21,7 +21,7 @@ interface IndexProps {
 }
 export const InputContext = createContextId<IntervalContext>('docs.theme-context');
 
-export const Interval = component$(({ intervalIndex }: IndexProps) => {
+export const Interval = component$(({ intervalIndex }: IntervalProps) => {
   const {
     labelSize,
     restColour,
@@ -30,7 +30,6 @@ export const Interval = component$(({ intervalIndex }: IndexProps) => {
     sprintDuration,
     radius,
     warmupDuration,
-    cooldownDuration,
     strokeWidth,
     circumference,
     degreesPerSecond,
@@ -44,12 +43,23 @@ export const Interval = component$(({ intervalIndex }: IndexProps) => {
 
   const workoutDisplay = (1 - labelSize) * circumference;
   //^reused
-  const intervalDegrees = degreesPerSecond * (restDuration + sprintDuration);
-  const sprintSegment = workoutDisplay * (sprintDuration / workoutDuration);
-  const restSegment = workoutDisplay * (restDuration / workoutDuration);
-  const sprintStartAngle =
-    warmupStartAngle + (360 * warmupDuration * (1 - labelSize)) / workoutDuration + intervalDegrees * intervalIndex;
-  const restStartAngle = sprintStartAngle + (360 * sprintDuration * (1 - labelSize)) / workoutDuration;
+  const intervalDegrees = degreesPerSecond * (restDuration[intervalIndex] + sprintDuration);
+  // const sprintSegment = workoutDisplay * (sprintDuration / workoutDuration);
+  const sprintSegment = sprintDuration * degreesPerSecond;
+  // const restSegment = workoutDisplay * (restDuration[intervalIndex] / workoutDuration);
+  const restSegment = restDuration[intervalIndex] * degreesPerSecond;
+  const completedRests = restDuration.slice(0, intervalIndex);
+  const sprintStartTime =
+    warmupDuration +
+    intervalIndex * sprintDuration +
+    completedRests.reduce((tally, current) => tally + current + sprintDuration, 0);
+
+  //const sprintStartAngle =
+  //  warmupStartAngle + (360 * warmupDuration * (1 - labelSize)) / workoutDuration + intervalDegrees * intervalIndex;
+  const sprintStartAngle = warmupStartAngle + sprintStartTime * degreesPerSecond;
+
+  //const restStartAngle = sprintStartAngle + (360 * sprintDuration * (1 - labelSize)) / workoutDuration;
+  const restStartAngle = sprintStartAngle + sprintDuration * degreesPerSecond;
 
   return (
     <>
@@ -58,7 +68,7 @@ export const Interval = component$(({ intervalIndex }: IndexProps) => {
         cy={cy}
         r={radius}
         stroke={sprintColour}
-        stroke-width={strokeWidth}
+        stroke-width={strokeWidth - 5}
         fill="none"
         transform={`rotate(${sprintStartAngle}, ${centreWidth}, ${centreHeight})`}
         stroke-dasharray={[sprintSegment, circumference - sprintSegment]}
@@ -68,8 +78,9 @@ export const Interval = component$(({ intervalIndex }: IndexProps) => {
         cx={cx}
         cy={cy}
         r={radius}
-        stroke={restColour}
-        stroke-width={strokeWidth}
+        // stroke={restColour}
+        stroke="yellow"
+        stroke-width={strokeWidth - 15}
         fill="none"
         transform={`rotate(${restStartAngle}, ${centreWidth}, ${centreHeight})`}
         stroke-dasharray={[restSegment, circumference - restSegment]}
@@ -78,7 +89,7 @@ export const Interval = component$(({ intervalIndex }: IndexProps) => {
   );
 });
 
-export const WarmupCooldown = component$(({ intervalIndex }: IndexProps) => {
+export const WarmupCooldown = component$(() => {
   const {
     labelSize,
     restColour,
@@ -97,8 +108,9 @@ export const WarmupCooldown = component$(({ intervalIndex }: IndexProps) => {
   } = useHIITContext();
 
   const workoutDisplay = (1 - labelSize) * circumference;
-  const warmupSegment = workoutDisplay * (warmupDuration / workoutDuration);
-  const cooldownSegment = workoutDisplay * (cooldownDuration / workoutDuration);
+  // const warmupSegment = (workoutDisplay * (warmupDuration / workoutDuration)) / 0.7;
+  const warmupSegment = warmupStartAngle + warmupDuration * degreesPerSecond;
+  const cooldownSegment = (workoutDisplay * (cooldownDuration / workoutDuration)) / 0.7;
   const cooldownStartAngle = labelStartAngle - (warmupSegment / circumference) * 360;
 
   return (
@@ -130,13 +142,15 @@ export const WarmupCooldown = component$(({ intervalIndex }: IndexProps) => {
 
 function useHIITContext() {
   const ctx = useContext(InputContext);
-  const { radius, warmupDuration, cooldownDuration, intervalCount, restDuration, sprintDuration, svgWidth, svgHeight } =
-    ctx;
+  const { radius, warmupDuration, cooldownDuration, restDuration, sprintDuration, svgWidth, svgHeight } = ctx;
   const labelSize = 0.3;
   const workoutDuration =
-    warmupDuration + cooldownDuration + intervalCount * (restDuration + sprintDuration) - restDuration;
+    warmupDuration +
+    cooldownDuration +
+    sprintDuration +
+    restDuration.reduce((tally, current) => tally + current + sprintDuration, 0);
   const exerciseProgramAngle = (1 - labelSize) * 360;
-  const degreesPerSecond = exerciseProgramAngle / workoutDuration;
+  const degreesPerSecond = exerciseProgramAngle / workoutDuration / 0.7;
   const centreWidth = svgWidth / 2;
   const centreHeight = svgHeight / 2;
   const labelStartAngle = 90 - (labelSize / 2) * 360;
@@ -151,7 +165,7 @@ function useHIITContext() {
     centreWidth,
     centreHeight,
     labelStartAngle,
-    warmupStartAngle,
+    warmupStartAngle, // a.k.a. programStartAngle
   };
 }
 
@@ -184,19 +198,14 @@ export const Label = component$(({}) => {
 });
 
 export default component$(() => {
-  const intervalCount = 5;
-  //intervalCount defined ^ here and in state v
-  //labelSize being defined ^ here means a bunch of stuff can't be DRYed out
-
   const state = useStore<IntervalContext>({
     restColour: 'green',
     sprintColour: 'red',
     restDuration: 40,
     sprintDuration: 60,
     radius: 90,
-    warmupDuration: 150,
-    cooldownDuration: 100,
-    intervalCount: 5,
+    warmupDuration: 60,
+    cooldownDuration: 60,
     labelColour: 'blue',
     svgWidth: 300,
     svgHeight: 300,
@@ -210,13 +219,14 @@ export default component$(() => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">
       <Label />
-      <WarmupCooldown time={0} />
+      <WarmupCooldown />
 
-      <>
-        {new Array(intervalCount).fill(0).map((_, index) => (
-          <Interval intervalIndex={index} />
-        ))}
-      </>
+      {/*<>*/}
+      {/*  {new Array(state.restDuration.length + 1).fill(0).map((_, index) => (*/}
+      {/*    <Interval intervalIndex={index} />*/}
+      {/*  ))}*/}
+      {/*</>*/}
+      <Interval intervalIndex={0} />
 
       {/*<WarmupCooldown time={0} />*/}
     </svg>
