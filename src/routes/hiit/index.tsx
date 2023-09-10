@@ -1,6 +1,5 @@
 import { component$, useStore, useContext, useContextProvider, createContextId, $, QRL } from '@builder.io/qwik';
 interface IntervalContext {
-  labelSize: number;
   restColour: string;
   sprintColour: string;
   labelColour: string;
@@ -64,8 +63,8 @@ export const Interval = component$(({ intervalIndex }: IndexProps) => {
       />
 
       <circle
-        cx="50%"
-        cy="50%"
+        cx={cx}
+        cy={cy}
         r={radius}
         stroke={restColour}
         stroke-width={strokeWidth}
@@ -90,6 +89,8 @@ export const WarmupCooldown = component$(({ intervalIndex }: IndexProps) => {
     centreHeight,
     workoutDuration,
     warmupStartAngle,
+    cx,
+    cy,
   } = useHIITContext();
 
   const workoutDisplay = (1 - labelSize) * circumference;
@@ -99,8 +100,8 @@ export const WarmupCooldown = component$(({ intervalIndex }: IndexProps) => {
   return (
     <>
       <circle
-        cx="50%"
-        cy="50%"
+        cx={cx}
+        cy={cy}
         r={radius}
         stroke={restColour}
         stroke-width={strokeWidth}
@@ -110,8 +111,8 @@ export const WarmupCooldown = component$(({ intervalIndex }: IndexProps) => {
       />
 
       <circle
-        cx="50%"
-        cy="50%"
+        cx={cx}
+        cy={cy}
         r={radius}
         stroke={restColour}
         stroke-width={strokeWidth}
@@ -149,8 +150,18 @@ function useHIITContext() {
 }
 
 export const Label = component$(({}) => {
-  const { radius, labelColour, strokeWidth, labelSize, circumference, centreWidth, centreHeight, labelStartAngle } =
-    useHIITContext();
+  const {
+    radius,
+    labelColour,
+    strokeWidth,
+    labelSize,
+    circumference,
+    centreWidth,
+    centreHeight,
+    labelStartAngle,
+    cx,
+    cy,
+  } = useHIITContext();
 
   return (
     <circle
@@ -200,7 +211,7 @@ export default component$(() => {
         ))}
       </>
 
-      <WarmupCooldown time={0} />
+      {/*<WarmupCooldown time={0} />*/}
     </svg>
   );
 });
