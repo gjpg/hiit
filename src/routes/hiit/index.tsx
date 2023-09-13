@@ -14,6 +14,7 @@ interface IntervalContext {
   strokeWidth: number;
   cx: string;
   cy: string;
+  now: number;
 }
 export const InputContext = createContextId<IntervalContext>('docs.theme-context');
 
@@ -34,6 +35,25 @@ export const Pointer = component$<PointerProps>(({ angle }) => {
       fill="white"
     />
   );
+});
+export const ResetButton = component$(() => {
+  // const ctx = useHIITContext();
+  const ctx = useContext(InputContext);
+  return <button onClick$={() => (ctx.now = 0)}>↺</button>;
+});
+
+export const PlayPauseButton = component$<{ onClick: QRL<() => {}> }>(({ onClick }) => {
+  return <button onClick$={onClick}>⏸⏵</button>;
+});
+// get it to pause (clearInterval)
+//stop at the end
+//swap between pause and play icons
+export const ForwardButton = component$<{ onClick: QRL<() => {}> }>(({ onClick }) => {
+  return <button onClick$={onClick}>⏭</button>;
+});
+
+export const BackButton = component$(() => {
+  return <button>⏮</button>;
 });
 
 export const TimePointer = component$<{ time: number }>(({ time }) => {
@@ -133,8 +153,6 @@ function useHIITContext() {
   const labelStartAngle = 90 - (labelSize / 2) * 360;
   const warmupStartAngle = 90 + (labelSize / 2) * 360;
 
-  console.log({ workoutDuration });
-
   return {
     ...ctx,
     labelSize,
@@ -176,6 +194,10 @@ export const Label = component$(({}) => {
   );
 });
 
+interface TimerStore {
+  timer?: NodeJS.Timeout;
+}
+
 export default component$(() => {
   const state = useStore<IntervalContext>({
     restColour: 'green',
@@ -191,24 +213,75 @@ export default component$(() => {
     strokeWidth: 20,
     cx: '50%',
     cy: '50%',
+    now: 300,
+  });
+
+  const nextIntervalStart = $(() => {
+    const times = [0];
+
+    times.push(state.warmupDuration);
+    state.restDuration.forEach((rest) => {
+      const lastTime = times[times.length - 1];
+      times.push(lastTime + state.sprintDuration);
+      times.push(lastTime + state.sprintDuration + rest);
+    });
+    const lastTime = times[times.length - 1];
+    times.push(lastTime + state.cooldownDuration);
+
+    console.log(times);
+
+    return times;
+  });
+
+  const timeStuff = useStore<TimerStore>({
+    timer: undefined,
   });
 
   useContextProvider(InputContext, state);
 
+  const onPlayPause = $(() => {
+    if (timeStuff.timer) {
+      clearInterval(timeStuff.timer);
+      timeStuff.timer = undefined;
+    } else {
+      timeStuff.timer = setInterval(() => (state.now += 10), 1000);
+    }
+  });
+
+  const onForward = $(async () => {
+    const startTimes = await nextIntervalStart();
+    console.log('Forward', startTimes);
+    const nextStartTime = startTimes.find((element) => state.now < element);
+
+    console.log(nextStartTime);
+
+    if (nextStartTime) {
+      state.now = nextStartTime;
+    }
+  });
+
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox={`0, 0, ${state.svgWidth}, ${state.svgHeight}`}
-      width={state.svgWidth}
-      height={state.svgHeight}
-    >
-      <Label />
-      <Warmup />
-      {new Array(state.restDuration.length).fill(0).map((_, index) => (
-        <Interval index={index} />
-      ))}
-      <CoolDown />`
-      <TimePointer time={300} />
-    </svg>
+    <>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox={`0, 0, ${state.svgWidth}, ${state.svgHeight}`}
+        width={state.svgWidth}
+        height={state.svgHeight}
+      >
+        <Label />
+        <Warmup />
+        {new Array(state.restDuration.length).fill(0).map((_, index) => (
+          <Interval index={index} />
+        ))}
+        <CoolDown />
+        <TimePointer time={state.now} />
+      </svg>
+
+      <p>{state.now}</p>
+      <PlayPauseButton onClick={onPlayPause} />
+      <ResetButton />
+      <BackButton />
+      <ForwardButton onClick={onForward} />
+    </>
   );
 });
