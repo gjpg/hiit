@@ -52,8 +52,8 @@ export const ForwardButton = component$<{ onClick: QRL<() => {}> }>(({ onClick }
   return <button onClick$={onClick}>⏭</button>;
 });
 
-export const BackButton = component$(() => {
-  return <button>⏮</button>;
+export const BackButton = component$<{ onClick: QRL<() => {}> }>(({ onClick }) => {
+  return <button onClick$={onClick}>⏮</button>;
 });
 
 export const TimePointer = component$<{ time: number }>(({ time }) => {
@@ -216,7 +216,7 @@ export default component$(() => {
     now: 300,
   });
 
-  const nextIntervalStart = $(() => {
+  const phaseStartTimes = $(() => {
     const times = [0];
 
     times.push(state.warmupDuration);
@@ -233,30 +233,40 @@ export default component$(() => {
     return times;
   });
 
-  const timeStuff = useStore<TimerStore>({
+  const timeState = useStore<TimerStore>({
     timer: undefined,
   });
 
   useContextProvider(InputContext, state);
 
   const onPlayPause = $(() => {
-    if (timeStuff.timer) {
-      clearInterval(timeStuff.timer);
-      timeStuff.timer = undefined;
+    if (timeState.timer) {
+      clearInterval(timeState.timer);
+      timeState.timer = undefined;
     } else {
-      timeStuff.timer = setInterval(() => (state.now += 10), 1000);
+      timeState.timer = setInterval(() => (state.now += 1), 1000);
     }
   });
 
   const onForward = $(async () => {
-    const startTimes = await nextIntervalStart();
+    const startTimes = await phaseStartTimes();
     console.log('Forward', startTimes);
-    const nextStartTime = startTimes.find((element) => state.now < element);
+    const nextStartTime = startTimes.find((start) => state.now < start);
 
     console.log(nextStartTime);
 
     if (nextStartTime) {
       state.now = nextStartTime;
+    }
+  });
+
+  const onBack = $(async () => {
+    const startTimes = await phaseStartTimes();
+    const reverseStartTimes = startTimes.reverse();
+    const previousStartTime = reverseStartTimes.find((start) => start < state.now);
+    console.log(previousStartTime);
+    if (previousStartTime) {
+      state.now = previousStartTime;
     }
   });
 
@@ -280,7 +290,7 @@ export default component$(() => {
       <p>{state.now}</p>
       <PlayPauseButton onClick={onPlayPause} />
       <ResetButton />
-      <BackButton />
+      <BackButton onClick={onBack} />
       <ForwardButton onClick={onForward} />
     </>
   );
