@@ -22,17 +22,20 @@ interface PointerProps {
   angle: number;
 }
 export const Pointer = component$<PointerProps>(({ angle }) => {
-  const { cx, cy, centreWidth, centreHeight, radius } = useHIITContext();
+  const { centreWidth, centreHeight, radius, strokeWidth } = useHIITContext();
+  const poly = `
+      ${centreWidth + radius + strokeWidth}, ${centreHeight} 
+      ${centreWidth + 10 + radius + strokeWidth}, ${centreHeight - 5} 
+      ${centreWidth + 10 + radius + strokeWidth}, ${centreHeight + 5}`;
+
+  console.log(poly);
   return (
-    <line
-      x1={cx}
-      y1={cy}
-      x2={radius}
-      y2={cy}
-      stroke-width="5"
+    <polygon
+      points={poly}
+      stroke-width="1"
       stroke="white"
-      transform={`rotate(${angle - 180}, ${centreWidth}, ${centreHeight})`}
       fill="white"
+      transform={`rotate(${angle}, ${centreWidth}, ${centreHeight})`}
     />
   );
 });
@@ -244,7 +247,7 @@ export default component$(() => {
       clearInterval(timeState.timer);
       timeState.timer = undefined;
     } else {
-      timeState.timer = setInterval(() => (state.now += 1), 1000);
+      timeState.timer = setInterval(() => (state.now += 10), 1000);
     }
   });
 
