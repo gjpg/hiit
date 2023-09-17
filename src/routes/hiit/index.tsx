@@ -142,7 +142,9 @@ export const ResetButton = component$(() => {
 });
 
 export const PlayPauseButton = component$<{ onClick: QRL<() => {}> }>(({ onClick }) => {
-  return <button onClick$={onClick}>⏸⏵</button>;
+  const { timer } = useContext(TimeContext);
+
+  return <button onClick$={onClick}>{timer ? '⏸' : '⏵'}</button>;
 });
 // get it to pause (clearInterval)
 //stop at the end
@@ -161,32 +163,6 @@ export const TimePointer = component$<{ time: number }>(({ time }) => {
   const startAngle = labelEndAngle + time * degreesPerSecond;
 
   return <Pointer angle={startAngle} />;
-});
-
-interface ArcProps {
-  startAngle: number; // 0 -> 360
-  endAngle: number; // 0 -> 360
-  width: number;
-  colour: string;
-}
-
-// given start and end angle, render an arc. Angles start at 3:00 O'Clock and are in degrees
-export const Arc = component$<ArcProps>(({ colour, endAngle, startAngle, width }) => {
-  const { radius, circumference, centreWidth, centreHeight, cx, cy } = useHIITContext();
-  const arcLength = (circumference * (endAngle - startAngle)) / 360;
-
-  return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={radius}
-      stroke={colour}
-      stroke-width={width}
-      fill="none"
-      transform={`rotate(${startAngle}, ${centreWidth}, ${centreHeight})`}
-      stroke-dasharray={[arcLength, circumference - arcLength]}
-    />
-  );
 });
 
 interface DurationProps {
@@ -337,6 +313,7 @@ export default component$(() => {
   });
 
   useContextProvider(InputContext, state);
+  useContextProvider(TimeContext, timeState);
 
   const onPlayPause = $(() => {
     if (timeState.timer) {
@@ -384,6 +361,7 @@ export default component$(() => {
         ))}
         <CoolDown />
         <TimePointer time={state.now} />
+        <PhaseProgress />
       </svg>
 
       <p>{state.now}</p>
