@@ -47,12 +47,12 @@ export const Arc = component$<ArcProps>(({ colour, endAngle, startAngle, width, 
   );
 });
 
-export const MinuteRing = component$<{ radius: number }>(({ radius }) => {
-  return <Arc startAngle={0} endAngle={360} width={10} colour={'cyan'} radius={radius} />;
+export const MinuteRing = component$<{ radius: number; colour: string }>(({ radius, colour }) => {
+  return <Arc startAngle={0} endAngle={360} width={10} colour={colour} radius={radius} />;
 });
 
-export const MinuteRings = component$<{ radius: number; remaining: number; stillToDo: number }>(
-  ({ radius, remaining, stillToDo }) => {
+export const MinuteRings = component$<{ radius: number; remaining: number; stillToDo: number; colour: string }>(
+  ({ radius, remaining, stillToDo, colour }) => {
     const wholeMinutesRemaining = Math.floor(remaining / 60);
 
     if (remaining < 60) {
@@ -63,7 +63,7 @@ export const MinuteRings = component$<{ radius: number; remaining: number; still
           startAngle={-90}
           endAngle={remaining * 6 - 90}
           width={10}
-          colour={'purple'}
+          colour={colour}
           radius={radius - (25 + minutesStillToDo * 15)}
         />
       );
@@ -71,8 +71,8 @@ export const MinuteRings = component$<{ radius: number; remaining: number; still
 
     return (
       <>
-        <MinuteRing radius={radius - (25 + wholeMinutesRemaining * 15)} />
-        <MinuteRings radius={radius} remaining={remaining - 60} stillToDo={stillToDo} />
+        <MinuteRing radius={radius - (25 + (wholeMinutesRemaining - 1) * 15)} colour={colour} />
+        <MinuteRings radius={radius} remaining={remaining - 60} stillToDo={stillToDo} colour={colour} />
       </>
     );
   },
@@ -106,10 +106,12 @@ export const PhaseProgress = component$(() => {
   const stillToDo = nextStartTime - now;
   const minuteRemainder = stillToDo % 60;
   const wholeMinutesRemaining = Math.floor(stillToDo / 60);
+  const phaseNumber = startTimes.filter((t) => t < now);
+  const colour = phaseNumber.length % 2 ? 'green' : 'red';
 
   return (
     <>
-      <MinuteRings radius={radius} remaining={stillToDo} stillToDo={stillToDo} />
+      <MinuteRings radius={radius} remaining={stillToDo} stillToDo={stillToDo} colour={colour} />
       {/*<MinuteRing radius={radius - 25} />*/}
       {/*<MinuteRing radius={radius - 40} />*/}
       {/*<MinuteRing radius={radius - 55} />*/}
