@@ -17,10 +17,114 @@ interface IntervalContext {
   now: number;
 }
 export const InputContext = createContextId<IntervalContext>('docs.theme-context');
+export const TimeContext = createContextId<TimerStore>('time.stuff');
+
+interface ArcProps {
+  startAngle: number; // 0 -> 360
+  endAngle: number; // 0 -> 360
+  width: number;
+  colour: string;
+  radius?: number;
+}
+
+// given start and end angle, render an arc. Angles start at 3:00 O'Clock and are in degrees
+export const Arc = component$<ArcProps>(({ colour, endAngle, startAngle, width, radius }) => {
+  const { radius: r, circumference, centreWidth, centreHeight, cx, cy } = useHIITContext();
+  const arcLength = (circumference * (endAngle - startAngle)) / 360;
+
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={radius || r}
+      stroke={colour}
+      stroke-width={width}
+      fill="none"
+      transform={`rotate(${startAngle}, ${centreWidth}, ${centreHeight})`}
+      stroke-dasharray={[arcLength, circumference - arcLength]}
+    />
+  );
+});
+
+export const MinuteRing = component$<{ radius: number }>(({ radius }) => {
+  return <Arc startAngle={0} endAngle={360} width={10} colour={'cyan'} radius={radius} />;
+});
+
+export const MinuteRings = component$<{ radius: number; remaining: number; stillToDo: number }>(
+  ({ radius, remaining, stillToDo }) => {
+    const wholeMinutesRemaining = Math.floor(remaining / 60);
+
+    if (remaining < 60) {
+      const minutesStillToDo = Math.floor(stillToDo / 60);
+      // return <Arc startAngle={-90} endAngle={360 - 90 - remaining * 6} width={10} colour={'purple'} radius={radius} />;
+      return (
+        <Arc
+          startAngle={0}
+          endAngle={remaining * 6}
+          width={10}
+          colour={'purple'}
+          radius={radius - (25 + minutesStillToDo * 15)}
+        />
+      );
+    }
+
+    return (
+      <>
+        <MinuteRing radius={radius - (25 + wholeMinutesRemaining * 15)} />
+        <MinuteRings radius={radius} remaining={remaining - 60} stillToDo={stillToDo} />
+      </>
+    );
+  },
+);
+
+export const PhaseProgress = component$(() => {
+  const { now, centreHeight, centreWidth, workoutDuration, radius } = useHIITContext();
+  const state = useContext(InputContext);
+  const phaseStartTimes = () => {
+    const times = [0];
+
+    times.push(state.warmupDuration);
+    state.restDuration.forEach((rest) => {
+      const lastTime = times[times.length - 1];
+      times.push(lastTime + state.sprintDuration);
+      times.push(lastTime + state.sprintDuration + rest);
+    });
+    const lastTime = times[times.length - 1];
+    times.push(lastTime + state.cooldownDuration);
+
+    console.log(times);
+
+    return times;
+  };
+
+  const startTimes = phaseStartTimes();
+  const nextStartTime = startTimes.find((start) => state.now < start) || workoutDuration;
+  const reverseStartTimes = startTimes.reverse();
+  const previousStartTime = reverseStartTimes.find((start) => start < state.now) || 0;
+  const duration = nextStartTime - previousStartTime;
+  const stillToDo = nextStartTime - now;
+  const minuteRemainder = stillToDo % 60;
+  const wholeMinutesRemaining = Math.floor(stillToDo / 60);
+
+  return (
+    <>
+      <MinuteRings radius={radius} remaining={stillToDo} stillToDo={stillToDo} />
+      {/*<MinuteRing radius={radius - 25} />*/}
+      {/*<MinuteRing radius={radius - 40} />*/}
+      {/*<MinuteRing radius={radius - 55} />*/}
+      {/*<MinuteRing radius={radius - 70} />*/}
+      <text x={centreWidth - 150} y={centreWidth} fill="white" font-size="5px">
+        previousStartTime={previousStartTime},nextStartTime={nextStartTime},duration={duration},now={now},minutes=
+        {wholeMinutesRemaining},remainder={minuteRemainder / 60}
+      </text>
+    </>
+  );
+});
 
 interface PointerProps {
   angle: number;
 }
+
 export const Pointer = component$<PointerProps>(({ angle }) => {
   const { centreWidth, centreHeight, radius, strokeWidth } = useHIITContext();
   const poly = `
@@ -29,15 +133,7 @@ export const Pointer = component$<PointerProps>(({ angle }) => {
       ${centreWidth + 10 + radius + strokeWidth}, ${centreHeight + 5}`;
 
   console.log(poly);
-  return (
-    <polygon
-      points={poly}
-      stroke-width="1"
-      stroke="white"
-      fill="white"
-      transform={`rotate(${angle}, ${centreWidth}, ${centreHeight})`}
-    />
-  );
+  return <polygon points={poly} fill="white" transform={`rotate(${angle}, ${centreWidth}, ${centreHeight})`} />;
 });
 export const ResetButton = component$(() => {
   // const ctx = useHIITContext();
@@ -207,16 +303,16 @@ export default component$(() => {
     sprintColour: 'red',
     restDuration: [90, 75, 60, 45, 35, 30, 30, 30, 30, 40, 0],
     sprintDuration: 30,
-    radius: 90,
+    radius: 110,
     warmupDuration: 300,
     cooldownDuration: 180,
     labelColour: 'blue',
-    svgWidth: 300,
-    svgHeight: 300,
-    strokeWidth: 20,
+    svgWidth: 400,
+    svgHeight: 400,
+    strokeWidth: 30,
     cx: '50%',
     cy: '50%',
-    now: 300,
+    now: 0,
   });
 
   const phaseStartTimes = $(() => {
@@ -247,7 +343,7 @@ export default component$(() => {
       clearInterval(timeState.timer);
       timeState.timer = undefined;
     } else {
-      timeState.timer = setInterval(() => (state.now += 10), 1000);
+      timeState.timer = setInterval(() => (state.now += 3), 1000);
     }
   });
 
