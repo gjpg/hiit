@@ -29,7 +29,8 @@ interface ArcProps {
 
 // given start and end angle, render an arc. Angles start at 3:00 O'Clock and are in degrees
 export const Arc = component$<ArcProps>(({ colour, endAngle, startAngle, width, radius }) => {
-  const { radius: r, circumference, centreWidth, centreHeight, cx, cy } = useHIITContext();
+  const { radius: r, centreWidth, centreHeight, cx, cy } = useHIITContext();
+  const circumference = 2 * Math.PI * (radius || r);
   const arcLength = (circumference * (endAngle - startAngle)) / 360;
 
   return (
@@ -59,8 +60,8 @@ export const MinuteRings = component$<{ radius: number; remaining: number; still
       // return <Arc startAngle={-90} endAngle={360 - 90 - remaining * 6} width={10} colour={'purple'} radius={radius} />;
       return (
         <Arc
-          startAngle={0}
-          endAngle={remaining * 6}
+          startAngle={-90}
+          endAngle={remaining * 6 - 90}
           width={10}
           colour={'purple'}
           radius={radius - (25 + minutesStillToDo * 15)}
