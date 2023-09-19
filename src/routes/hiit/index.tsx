@@ -1,5 +1,37 @@
 import { component$, useStore, useContext, useContextProvider, createContextId, $, QRL } from '@builder.io/qwik';
 
+// make to do list (todo-x)
+// make note glossary of terminology
+// write down some UI ideas
+
+//now
+//starts at 0, increments with each second elapsed
+
+//stillToDo
+//subtracts 'now' from 'nextStartTime', to find seconds left within 'phase'
+
+//wholeMinutesRemaining
+//calculates number of whole minutes from 'stillToDo'
+
+//duration
+//length in seconds of current 'phase', calculated from the start time of current segment and next segment
+
+//phaseNumber
+//returns which number phase we're on currently, used to determine the colour of the inner rings
+
+//exerciseProgramAngle
+//constant that makes sure the geometry of the program stays consistent with any adjustments to labelSize
+
+//phaseStartTimes
+//using information from 'state', creates a 'times' array of the start times of each phase
+
+//some stuff that I couldn't really understand
+//remaining
+//minutesStillToDo
+//intervalsSoFar
+//MinuteRing
+//MinuteRings
+
 interface IntervalContext {
   restColour: string;
   sprintColour: string;
@@ -28,6 +60,9 @@ interface ArcProps {
 }
 
 // given start and end angle, render an arc. Angles start at 3:00 O'Clock and are in degrees
+
+//todo-two different things called radius here
+//todo-circumference is redefined within this component
 export const Arc = component$<ArcProps>(({ colour, endAngle, startAngle, width, radius }) => {
   const { radius: r, centreWidth, centreHeight, cx, cy } = useHIITContext();
   const circumference = 2 * Math.PI * (radius || r);
@@ -47,11 +82,14 @@ export const Arc = component$<ArcProps>(({ colour, endAngle, startAngle, width, 
   );
 });
 
+//todo-MinuteRing and MinuteRings have very similar names
 export const MinuteRing = component$<{ radius: number; colour: string }>(({ radius, colour }) => {
   return <Arc startAngle={0} endAngle={360} width={10} colour={colour} radius={radius} />;
 });
 
-export const MinuteRings = component$<{ radius: number; remaining: number; stillToDo: number; colour: string }>(
+//todo-can't find where 'remaining' is defined
+//todo-minutesStillToDo does exact same thing as wholeMinutesRemaining but is redefined within function
+export const RecursiveRings = component$<{ radius: number; remaining: number; stillToDo: number; colour: string }>(
   ({ radius, remaining, stillToDo, colour }) => {
     const wholeMinutesRemaining = Math.floor(remaining / 60);
 
@@ -72,12 +110,13 @@ export const MinuteRings = component$<{ radius: number; remaining: number; still
     return (
       <>
         <MinuteRing radius={radius - (25 + (wholeMinutesRemaining - 1) * 15)} colour={colour} />
-        <MinuteRings radius={radius} remaining={remaining - 60} stillToDo={stillToDo} colour={colour} />
+        <RecursiveRings radius={radius} remaining={remaining - 60} stillToDo={stillToDo} colour={colour} />
       </>
     );
   },
 );
 
+//todo-duration is redefined here
 export const PhaseProgress = component$(() => {
   const { now, centreHeight, centreWidth, workoutDuration, radius } = useHIITContext();
   const state = useContext(InputContext);
@@ -109,13 +148,11 @@ export const PhaseProgress = component$(() => {
   const phaseNumber = startTimes.filter((t) => t < now);
   const colour = phaseNumber.length % 2 ? 'green' : 'red';
 
+  //todo-when 'now' is 0, inner rings are red
+
   return (
     <>
-      <MinuteRings radius={radius} remaining={stillToDo} stillToDo={stillToDo} colour={colour} />
-      {/*<MinuteRing radius={radius - 25} />*/}
-      {/*<MinuteRing radius={radius - 40} />*/}
-      {/*<MinuteRing radius={radius - 55} />*/}
-      {/*<MinuteRing radius={radius - 70} />*/}
+      <RecursiveRings radius={radius} remaining={stillToDo} stillToDo={stillToDo} colour={colour} />
       <text x={centreWidth - 150} y={centreWidth} fill="white" font-size="5px">
         previousStartTime={previousStartTime},nextStartTime={nextStartTime},duration={duration},now={now},minutes=
         {wholeMinutesRemaining},remainder={minuteRemainder / 60}
@@ -149,9 +186,7 @@ export const PlayPauseButton = component$<{ onClick: QRL<() => {}> }>(({ onClick
 
   return <button onClick$={onClick}>{timer ? '⏸' : '⏵'}</button>;
 });
-// get it to pause (clearInterval)
-//stop at the end
-//swap between pause and play icons
+
 export const ForwardButton = component$<{ onClick: QRL<() => {}> }>(({ onClick }) => {
   return <button onClick$={onClick}>⏭</button>;
 });
@@ -192,6 +227,7 @@ export const Warmup = component$(() => {
   return <Duration startTime={0} duration={warmupDuration} colour={restColour} width={strokeWidth} />;
 });
 
+//todo-intervalsSoFar redefined
 export const CoolDown = component$(() => {
   const { cooldownDuration, restColour, strokeWidth, restDuration, sprintDuration, warmupDuration } = useHIITContext();
   const intervalsSoFar = restDuration.reduce((tally, current) => tally + current + sprintDuration, 0);
@@ -275,7 +311,6 @@ export const Label = component$(({}) => {
 interface TimerStore {
   timer?: NodeJS.Timeout;
 }
-
 export default component$(() => {
   const state = useStore<IntervalContext>({
     restColour: 'green',
@@ -294,6 +329,7 @@ export default component$(() => {
     now: 0,
   });
 
+  //todo-lastTime isn't DRY
   const phaseStartTimes = $(() => {
     const times = [0];
 
