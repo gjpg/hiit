@@ -26,11 +26,18 @@ import { component$, useStore, useContext, useContextProvider, createContextId, 
 //using information from 'state', creates a 'times' array of the start times of each phase
 
 //some stuff that I couldn't really understand
-//remaining
 //minutesStillToDo
 //intervalsSoFar
-//MinuteRing
-//MinuteRings
+
+//bugs
+//Inner rings start red when now is 0
+//FIXED- phaseNumber was undefined because 0 isn't less than 0. Changed the check to less or equal to 0
+
+//Time doesn't stop when run is over
+//UNFIXED- found general solution but not implemented. can't bring in workout duration without freezing the timer permanently
+
+//phaseNumber not seeming to work properly at all.
+//UNFIXED- doesn't seem to have any negative effect (yet)
 
 interface IntervalContext {
   restColour: string;
@@ -82,39 +89,46 @@ export const Arc = component$<ArcProps>(({ colour, endAngle, startAngle, width, 
   );
 });
 
-//todo-MinuteRing and MinuteRings have very similar names
-export const MinuteRing = component$<{ radius: number; colour: string }>(({ radius, colour }) => {
+export const OneRing = component$<{ radius: number; colour: string }>(({ radius, colour }) => {
   return <Arc startAngle={0} endAngle={360} width={10} colour={colour} radius={radius} />;
 });
 
-//todo-can't find where 'remaining' is defined
+interface RingProps {
+  stillToDo: number;
+  remaining: number;
+  colour: string;
+  radius: number;
+}
+
+export const CountdownRing = component$<RingProps>(({ stillToDo, colour, radius, remaining }) => {
+  const minutesStillToDo = Math.floor(stillToDo / 60);
+  // return <Arc startAngle={-90} endAngle={360 - 90 - remaining * 6} width={10} colour={'purple'} radius={radius} />;
+  return (
+    <Arc
+      startAngle={-90}
+      endAngle={remaining * 6 - 90}
+      width={10}
+      colour={colour}
+      radius={radius - (25 + minutesStillToDo * 15)}
+    />
+  );
+});
+
 //todo-minutesStillToDo does exact same thing as wholeMinutesRemaining but is redefined within function
-export const RecursiveRings = component$<{ radius: number; remaining: number; stillToDo: number; colour: string }>(
-  ({ radius, remaining, stillToDo, colour }) => {
-    const wholeMinutesRemaining = Math.floor(remaining / 60);
+export const RecursiveRings = component$<RingProps>(({ radius, remaining, stillToDo, colour }) => {
+  const wholeMinutesRemaining = Math.floor(remaining / 60);
 
-    if (remaining < 60) {
-      const minutesStillToDo = Math.floor(stillToDo / 60);
-      // return <Arc startAngle={-90} endAngle={360 - 90 - remaining * 6} width={10} colour={'purple'} radius={radius} />;
-      return (
-        <Arc
-          startAngle={-90}
-          endAngle={remaining * 6 - 90}
-          width={10}
-          colour={colour}
-          radius={radius - (25 + minutesStillToDo * 15)}
-        />
-      );
-    }
+  if (remaining < 60) {
+    return <CountdownRing stillToDo={stillToDo} colour={colour} radius={radius} remaining={remaining} />;
+  }
 
-    return (
-      <>
-        <MinuteRing radius={radius - (25 + (wholeMinutesRemaining - 1) * 15)} colour={colour} />
-        <RecursiveRings radius={radius} remaining={remaining - 60} stillToDo={stillToDo} colour={colour} />
-      </>
-    );
-  },
-);
+  return (
+    <>
+      <OneRing radius={radius - (25 + (wholeMinutesRemaining - 1) * 15)} colour={colour} />
+      <RecursiveRings radius={radius} remaining={remaining - 60} stillToDo={stillToDo} colour={colour} />
+    </>
+  );
+});
 
 //todo-duration is redefined here
 export const PhaseProgress = component$(() => {
@@ -145,17 +159,15 @@ export const PhaseProgress = component$(() => {
   const stillToDo = nextStartTime - now;
   const minuteRemainder = stillToDo % 60;
   const wholeMinutesRemaining = Math.floor(stillToDo / 60);
-  const phaseNumber = startTimes.filter((t) => t < now);
+  const phaseNumber = startTimes.filter((t) => t <= now);
   const colour = phaseNumber.length % 2 ? 'green' : 'red';
-
-  //todo-when 'now' is 0, inner rings are red
 
   return (
     <>
       <RecursiveRings radius={radius} remaining={stillToDo} stillToDo={stillToDo} colour={colour} />
       <text x={centreWidth - 150} y={centreWidth} fill="white" font-size="5px">
-        previousStartTime={previousStartTime},nextStartTime={nextStartTime},duration={duration},now={now},minutes=
-        {wholeMinutesRemaining},remainder={minuteRemainder / 60}
+        previousStartTime={previousStartTime},nextStartTime={nextStartTime},duration={duration},now={now},phaseNumber=
+        {phaseNumber}
       </text>
     </>
   );
@@ -355,12 +367,29 @@ export default component$(() => {
   useContextProvider(TimeContext, timeState);
 
   const onPlayPause = $(() => {
+    //const { workoutDuration } = useHIITContext();
     if (timeState.timer) {
       clearInterval(timeState.timer);
       timeState.timer = undefined;
     } else {
-      timeState.timer = setInterval(() => (state.now += 3), 1000);
+      timeState.timer = setInterval(() => (state.now += 0.03), 1);
     }
+
+    //todo- set bounds 0 <= now <= workoutDuration.
+    // when now < 0, set now to 0, stop incrementing and set icon to play button.
+    // when workoutDuration =< now, stop incrementing, set now = workoutDuration, set icon to play icon
+    // right now, icon is determined only by clicking, it should instead be related to whether the timer is active
+    // current attempt at fixing is below, but const { workoutDuration } = useHIITContext(); freezes the timer entirely
+
+    // if (state.now < 0) {
+    //   clearInterval(timeState.timer);
+    //   state.now = 0;
+    // }
+    //
+    // if (state.now >= workoutDuration) {
+    //   clearInterval(timeState.timer);
+    //   state.now = workoutDuration;
+    // }
   });
 
   const onForward = $(async () => {
