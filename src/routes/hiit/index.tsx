@@ -15,20 +15,32 @@ export const HeartChart = component$(() => {
   const myChart = useSignal<HTMLCanvasElement>();
   useVisibleTask$(() => {
     if (myChart?.value) {
+      const labels = ['January', 'February', 'March', 'April', 'June', 'July'];
+      const data = {
+        labels: labels,
+        datasets: [
+          {
+            label: 'My First Dataset',
+            data: [65, 59, 80, 81, 56, 55, 40],
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0,
+          },
+        ],
+      };
+
       Chart.register(...registerables);
       new Chart(myChart.value, {
-        type: 'bar',
-        data: {
-          labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-          datasets: [
-            {
-              label: '# of Votes',
-              data: [12, 19, 3, 5, 2, 3],
-              borderWidth: 1,
-            },
-          ],
-        },
+        type: 'line',
+        data: data,
         options: {
+          elements: { point: { radius: 0 } },
+          plugins: {
+            tooltip: {
+              enabled: false,
+            },
+          },
+
           scales: {
             y: {
               beginAtZero: true,
