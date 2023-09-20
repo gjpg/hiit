@@ -39,5 +39,8 @@
   "prettier": {
     "printWidth": 120,
     "singleQuote": true
+  },
+  "dependencies": {
+    "chart.js": "^4.4.0"
   }
 }

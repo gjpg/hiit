@@ -1,8 +1,59 @@
-import { component$, useStore, useContext, useContextProvider, createContextId, $, QRL } from '@builder.io/qwik';
+import {
+  component$,
+  useStore,
+  useContext,
+  useContextProvider,
+  createContextId,
+  $,
+  QRL,
+  useSignal,
+  useVisibleTask$,
+} from '@builder.io/qwik';
+import { Chart, registerables } from 'chart.js';
 
+export const HeartChart = component$(() => {
+  const myChart = useSignal<HTMLCanvasElement>();
+  useVisibleTask$(() => {
+    if (myChart?.value) {
+      Chart.register(...registerables);
+      new Chart(myChart.value, {
+        type: 'bar',
+        data: {
+          labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+          datasets: [
+            {
+              label: '# of Votes',
+              data: [12, 19, 3, 5, 2, 3],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    }
+  });
+
+  return (
+    <div>
+      <canvas ref={myChart} id="myChart"></canvas>
+    </div>
+  );
+});
 // make to do list (todo-x)
 // make note glossary of terminology
 // write down some UI ideas
+
+//todo- smooth animation
+
+//todo- dry
+
+//todo- check bugfixes
 
 //now
 //starts at 0, increments with each second elapsed
@@ -372,7 +423,7 @@ export default component$(() => {
       clearInterval(timeState.timer);
       timeState.timer = undefined;
     } else {
-      timeState.timer = setInterval(() => (state.now += 0.03), 1);
+      timeState.timer = setInterval(() => (state.now += 3), 1000);
     }
 
     //todo- set bounds 0 <= now <= workoutDuration.
@@ -437,6 +488,7 @@ export default component$(() => {
       <ResetButton />
       <BackButton onClick={onBack} />
       <ForwardButton onClick={onForward} />
+      <HeartChart />
     </>
   );
 });
