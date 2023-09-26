@@ -290,11 +290,11 @@ export default component$(() => {
   const state = useStore<IntervalContext>({
     restColour: 'green',
     sprintColour: 'red',
-    restDuration: [90, 75, 60, 45, 35, 30, 30, 30, 30, 40, 0],
+    restDuration: [90, 75, 60, 45, 35, 30, 30, 30, 30, 40, 180],
     sprintDuration: 30,
     radius: 110,
     warmupDuration: 300,
-    cooldownDuration: 180,
+    cooldownDuration: 0,
     labelColour: 'blue',
     svgWidth: 400,
     svgHeight: 400,
@@ -317,7 +317,7 @@ export default component$(() => {
     const lastTime = times[times.length - 1];
     times.push(lastTime + state.cooldownDuration);
 
-    console.log(times);
+    // console.log(times);
 
     return times;
   });
@@ -357,10 +357,10 @@ export default component$(() => {
 
   const onForward = $(async () => {
     const startTimes = await phaseStartTimes();
-    console.log('Forward', startTimes);
+    // console.log('Forward', startTimes);
     const nextStartTime = startTimes.find((start) => state.now < start);
 
-    console.log(nextStartTime);
+    // console.log(nextStartTime);
 
     if (nextStartTime) {
       state.now = nextStartTime;
@@ -371,7 +371,7 @@ export default component$(() => {
     const startTimes = await phaseStartTimes();
     const reverseStartTimes = startTimes.reverse();
     const previousStartTime = reverseStartTimes.find((start) => start < state.now);
-    console.log(previousStartTime);
+    // console.log(previousStartTime);
     if (previousStartTime) {
       state.now = previousStartTime;
     }
@@ -388,7 +388,7 @@ export default component$(() => {
         <Label />
         <Warmup />
         {new Array(state.restDuration.length).fill(0).map((_, index) => (
-          <Interval index={index} />
+          <Interval key={index} index={index} />
         ))}
         <CoolDown />
         <TimePointer time={state.now} />
