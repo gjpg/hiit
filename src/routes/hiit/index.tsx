@@ -1,62 +1,10 @@
-import {
-  component$,
-  useStore,
-  useContext,
-  useContextProvider,
-  createContextId,
-  $,
-  QRL,
-  useSignal,
-  useVisibleTask$,
-} from '@builder.io/qwik';
-import { Chart, registerables } from 'chart.js';
+import { $, component$, createContextId, QRL, useContext, useContextProvider, useStore } from '@builder.io/qwik';
+import { HeartChart } from '~/routes/hiit/heartchart';
+import { useHIITContext, InputContext, TimeContext, TimerStore, IntervalContext } from '~/routes/hiit/contexts';
 
-export const HeartChart = component$(() => {
-  const myChart = useSignal<HTMLCanvasElement>();
-  useVisibleTask$(() => {
-    if (myChart?.value) {
-      const labels = ['January', 'February', 'March', 'April', 'June', 'July'];
-      const data = {
-        labels: labels,
-        datasets: [
-          {
-            label: 'My First Dataset',
-            data: [65, 59, 80, 81, 56, 55, 40],
-            fill: false,
-            borderColor: 'rgb(75, 192, 192)',
-            tension: 0,
-          },
-        ],
-      };
+//https://codepen.io/jordanwillis/pen/BWxErp
+//https://www.chartjs.org/docs/latest/samples/area/line-datasets.html
 
-      Chart.register(...registerables);
-      new Chart(myChart.value, {
-        type: 'line',
-        data: data,
-        options: {
-          elements: { point: { radius: 0 } },
-          plugins: {
-            tooltip: {
-              enabled: false,
-            },
-          },
-
-          scales: {
-            y: {
-              beginAtZero: true,
-            },
-          },
-        },
-      });
-    }
-  });
-
-  return (
-    <div>
-      <canvas ref={myChart} id="myChart"></canvas>
-    </div>
-  );
-});
 // make to do list (todo-x)
 // make note glossary of terminology
 // write down some UI ideas
@@ -101,25 +49,6 @@ export const HeartChart = component$(() => {
 
 //phaseNumber not seeming to work properly at all.
 //UNFIXED- doesn't seem to have any negative effect (yet)
-
-interface IntervalContext {
-  restColour: string;
-  sprintColour: string;
-  labelColour: string;
-  radius: number;
-  restDuration: number[];
-  sprintDuration: number;
-  warmupDuration: number;
-  cooldownDuration: number;
-  svgWidth: number;
-  svgHeight: number;
-  strokeWidth: number;
-  cx: string;
-  cy: string;
-  now: number;
-}
-export const InputContext = createContextId<IntervalContext>('docs.theme-context');
-export const TimeContext = createContextId<TimerStore>('time.stuff');
 
 interface ArcProps {
   startAngle: number; // 0 -> 360
@@ -209,7 +138,7 @@ export const PhaseProgress = component$(() => {
     const lastTime = times[times.length - 1];
     times.push(lastTime + state.cooldownDuration);
 
-    console.log(times);
+    // console.log(times);
 
     return times;
   };
@@ -247,7 +176,7 @@ export const Pointer = component$<PointerProps>(({ angle }) => {
       ${centreWidth + 10 + radius + strokeWidth}, ${centreHeight - 5} 
       ${centreWidth + 10 + radius + strokeWidth}, ${centreHeight + 5}`;
 
-  console.log(poly);
+  // console.log(poly);
   return <polygon points={poly} fill="white" transform={`rotate(${angle}, ${centreWidth}, ${centreHeight})`} />;
 });
 export const ResetButton = component$(() => {
@@ -329,32 +258,6 @@ export const Interval = component$(({ index }: { index: number }) => {
   );
 });
 
-function useHIITContext() {
-  const ctx = useContext(InputContext);
-  const { radius, warmupDuration, cooldownDuration, restDuration, sprintDuration, svgWidth, svgHeight } = ctx;
-  const labelSize = 0.3;
-  const workoutDuration =
-    warmupDuration + cooldownDuration + restDuration.reduce((tally, current) => tally + current + sprintDuration, 0);
-  const exerciseProgramAngle = (1 - labelSize) * 360;
-  const degreesPerSecond = exerciseProgramAngle / workoutDuration;
-  const centreWidth = svgWidth / 2;
-  const centreHeight = svgHeight / 2;
-  const labelStartAngle = 90 - (labelSize / 2) * 360;
-  const warmupStartAngle = 90 + (labelSize / 2) * 360;
-
-  return {
-    ...ctx,
-    labelSize,
-    circumference: radius * Math.PI * 2,
-    workoutDuration,
-    degreesPerSecond,
-    centreWidth,
-    centreHeight,
-    labelStartAngle,
-    warmupStartAngle, // a.k.a. programStartAngle
-  };
-}
-
 export const Label = component$(({}) => {
   const {
     radius,
@@ -383,9 +286,6 @@ export const Label = component$(({}) => {
   );
 });
 
-interface TimerStore {
-  timer?: NodeJS.Timeout;
-}
 export default component$(() => {
   const state = useStore<IntervalContext>({
     restColour: 'green',
