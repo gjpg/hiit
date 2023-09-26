@@ -247,7 +247,9 @@ export const Interval = component$(({ index }: { index: number }) => {
 
   return (
     <>
-      <Duration startTime={startTime} duration={sprintDuration} width={strokeWidth} colour={sprintColour} />
+      <svg className="glow">
+        <Duration startTime={startTime} duration={sprintDuration} width={strokeWidth} colour={sprintColour} />
+      </svg>
       <Duration
         startTime={startTime + sprintDuration}
         duration={restDuration[index]}
@@ -390,6 +392,7 @@ export default component$(() => {
         {new Array(state.restDuration.length).fill(0).map((_, index) => (
           <Interval key={index} index={index} />
         ))}
+
         <CoolDown />
         <TimePointer time={state.now} />
         <PhaseProgress />
