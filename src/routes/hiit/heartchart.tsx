@@ -57,7 +57,6 @@ export const HeartChart = component$(() => {
       const labels = [...Array(workoutDuration).keys()];
       const data = { labels, datasets };
 
-      console.log('registerables', registerables);
       Chart.register(Filler, ...registerables);
       new Chart(myChart.value, {
         type: 'line',

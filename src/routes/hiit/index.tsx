@@ -388,6 +388,7 @@ export default component$(() => {
         height={state.svgHeight}
       >
         <Label />
+
         <Warmup />
         {new Array(state.restDuration.length).fill(0).map((_, index) => (
           <Interval key={index} index={index} />
