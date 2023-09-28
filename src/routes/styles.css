@@ -245,15 +245,23 @@ button.button-small {
 0% {
   filter: brightness(100%);
 }
-  50% {
-    filter: brightness(80%);
+  25% {
+    filter: brightness(70%);
   }
-  100% {
+  50% {
      filter: brightness(100%);
    }
+
+  75% {
+    filter: brightness(130%);
+  }
+
+  100% {
+    filter: brightness(100%);
+  }
 }
 
 .glow {
   /*animation: glow 2s linear infinite; /* Adjust the duration and animation type as needed */
-  animation:brightness 2s linear infinite;
+  animation:brightness 1s linear infinite;
 }

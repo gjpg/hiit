@@ -9,6 +9,8 @@ import { useHIITContext, InputContext, TimeContext, TimerStore, IntervalContext 
 // make note glossary of terminology
 // write down some UI ideas
 
+//todo- bug where cant use back button when at end of warmup/start of 1st sprint
+
 //todo- smooth animation
 
 //todo- dry
@@ -49,6 +51,19 @@ import { useHIITContext, InputContext, TimeContext, TimerStore, IntervalContext 
 
 //phaseNumber not seeming to work properly at all.
 //UNFIXED- doesn't seem to have any negative effect (yet)
+
+//todo-buttons
+//+5
+//-5
+//duplicate
+//delete
+//undo
+
+export const Plus5Button = component$(() => {
+  const ctx = useContext(InputContext);
+  // const currentPhase = ;
+  return <button onClick$={() => ctx.now}>↺</button>;
+});
 
 interface ArcProps {
   startAngle: number; // 0 -> 360
@@ -157,10 +172,6 @@ export const PhaseProgress = component$(() => {
   return (
     <>
       <RecursiveRings radius={radius} remaining={stillToDo} stillToDo={stillToDo} colour={colour} />
-      <text x={centreWidth - 150} y={centreWidth} fill="white" font-size="5px">
-        previousStartTime={previousStartTime},nextStartTime={nextStartTime},duration={duration},now={now},phaseNumber=
-        {phaseNumber}
-      </text>
     </>
   );
 });
@@ -215,20 +226,36 @@ interface DurationProps {
 }
 
 // converts from time domain to the angle domain
-export const Duration = component$<DurationProps>(({ startTime, duration, colour, width }) => {
+export const Phase = component$<DurationProps>(({ startTime, duration, colour, width }) => {
   const { degreesPerSecond, labelSize } = useHIITContext();
+  const { now } = useContext(InputContext);
+
   const labelEndAngle = 90 + (360 * labelSize) / 2;
   const startAngle = labelEndAngle + startTime * degreesPerSecond;
+  const activePhase = startTime <= now && now < startTime + duration;
 
   return (
+    //<svg className={activePhase ? 'glow' : ''}>
     <Arc startAngle={startAngle} endAngle={startAngle + duration * degreesPerSecond} width={width} colour={colour} />
+    //</svg>
   );
 });
 
 export const Warmup = component$(() => {
   const { warmupDuration, restColour, strokeWidth } = useHIITContext();
+  const { now } = useContext(InputContext);
+  const ctx = useContext(InputContext);
+  const activeWarmup = 0 <= now && now < warmupDuration;
 
-  return <Duration startTime={0} duration={warmupDuration} colour={restColour} width={strokeWidth} />;
+  if (activeWarmup) {
+    // ctx.currentRest = -1;
+  }
+
+  return (
+    <svg class={activeWarmup ? 'glow' : ''}>
+      <Phase startTime={0} duration={warmupDuration} colour={restColour} width={strokeWidth} />
+    </svg>
+  );
 });
 
 //todo-intervalsSoFar redefined
@@ -237,25 +264,34 @@ export const CoolDown = component$(() => {
   const intervalsSoFar = restDuration.reduce((tally, current) => tally + current + sprintDuration, 0);
   const startTime = warmupDuration + intervalsSoFar;
 
-  return <Duration startTime={startTime} duration={cooldownDuration} colour={restColour} width={strokeWidth} />;
+  return <Phase startTime={startTime} duration={cooldownDuration} colour={restColour} width={strokeWidth} />;
 });
 
 export const Interval = component$(({ index }: { index: number }) => {
   const { sprintColour, restColour, sprintDuration, strokeWidth, restDuration, warmupDuration } = useHIITContext();
+  const { now } = useContext(InputContext);
+  const ctx = useContext(InputContext);
+
   const intervalsSoFar = restDuration.slice(0, index).reduce((tally, current) => tally + current + sprintDuration, 0);
   const startTime = warmupDuration + intervalsSoFar;
 
+  // const sprintOrRest = intervalsSoFar % 2;
+  const activeInterval = startTime <= now && now < startTime + sprintDuration + restDuration[index];
+
+  if (activeInterval) {
+    // ctx.currentRest = index;
+  }
   return (
     <>
-      <svg className="glow">
-        <Duration startTime={startTime} duration={sprintDuration} width={strokeWidth} colour={sprintColour} />
+      <svg class={activeInterval ? 'glow' : ''}>
+        <Phase startTime={startTime} duration={sprintDuration} width={strokeWidth} colour={sprintColour} />
+        <Phase
+          startTime={startTime + sprintDuration}
+          duration={restDuration[index]}
+          width={strokeWidth}
+          colour={restColour}
+        />
       </svg>
-      <Duration
-        startTime={startTime + sprintDuration}
-        duration={restDuration[index]}
-        width={strokeWidth}
-        colour={restColour}
-      />
     </>
   );
 });
@@ -337,7 +373,7 @@ export default component$(() => {
       clearInterval(timeState.timer);
       timeState.timer = undefined;
     } else {
-      timeState.timer = setInterval(() => (state.now += 3), 1000);
+      timeState.timer = setInterval(() => (state.now += 1), 1000);
     }
 
     //todo- set bounds 0 <= now <= workoutDuration.
@@ -399,7 +435,7 @@ export default component$(() => {
         <PhaseProgress />
       </svg>
 
-      <p>{state.now}</p>
+      {/*<p>{state.currentRest}</p>*/}
       <PlayPauseButton onClick={onPlayPause} />
       <ResetButton />
       <BackButton onClick={onBack} />
