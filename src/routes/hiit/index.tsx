@@ -409,8 +409,8 @@ export default component$(() => {
     const startTimes = await phaseStartTimes();
     const reverseStartTimes = startTimes.reverse();
     const previousStartTime = reverseStartTimes.find((start) => start < state.now);
-    // console.log(previousStartTime);
-    if (previousStartTime) {
+
+    if (previousStartTime !== undefined) {
       state.now = previousStartTime;
     }
   });
@@ -430,7 +430,7 @@ export default component$(() => {
           <Interval key={index} index={index} />
         ))}
 
-        <CoolDown />
+        {/*<CoolDown />*/}
         <TimePointer time={state.now} />
         <PhaseProgress />
       </svg>
