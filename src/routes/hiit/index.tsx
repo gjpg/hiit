@@ -59,10 +59,82 @@ import { useHIITContext, InputContext, TimeContext, TimerStore, IntervalContext 
 //delete
 //undo
 
-export const Plus5Button = component$(() => {
+// export const Plus5Button = component$<{ onClick: QRL<() => {}> }>((onClick) => {
+//   const ctx = useContext(InputContext);
+//   // const currentPhase = ;
+//   return <button onClick$={() => {onClick}}>+20</button>;
+// });
+
+export const Plus5Button = component$((onClick) => {
+  const ctx = useContext(InputContext);
+  const { currentRest } = ctx;
+
+  // const currentPhase = ;
+  return (
+    <button
+      onClick$={() => {
+        if (currentRest && currentRest >= 0) {
+          ctx.restDuration[currentRest] += 20;
+        }
+      }}
+    >
+      +20
+    </button>
+  );
+});
+
+export const Minus5Button = component$((onClick) => {
   const ctx = useContext(InputContext);
   // const currentPhase = ;
-  return <button onClick$={() => ctx.now}>↺</button>;
+  const { currentRest } = ctx;
+
+  return (
+    <button
+      onClick$={() => {
+        if (currentRest && currentRest >= 0) {
+          ctx.restDuration[currentRest] >= 20
+            ? (ctx.restDuration[currentRest] -= 20)
+            : (ctx.restDuration[currentRest] = 0);
+        }
+      }}
+    >
+      -20
+    </button>
+  );
+});
+
+export const DuplicateButton = component$(() => {
+  const ctx = useContext(InputContext);
+  const { currentRest, restDuration } = ctx;
+
+  return (
+    <button
+      onClick$={() => {
+        if (currentRest && currentRest >= 0) {
+          restDuration.splice(currentRest + 1, 0, restDuration[currentRest]);
+        }
+      }}
+    >
+      Duplicate
+    </button>
+  );
+});
+
+export const DeleteButton = component$(() => {
+  const ctx = useContext(InputContext);
+  const { currentRest, restDuration } = ctx;
+
+  return (
+    <button
+      onClick$={() => {
+        if (currentRest && currentRest >= 0) {
+          restDuration.splice(currentRest, 1);
+        }
+      }}
+    >
+      Delete
+    </button>
+  );
 });
 
 interface ArcProps {
@@ -160,12 +232,9 @@ export const PhaseProgress = component$(() => {
 
   const startTimes = phaseStartTimes();
   const nextStartTime = startTimes.find((start) => state.now < start) || workoutDuration;
-  const reverseStartTimes = startTimes.reverse();
-  const previousStartTime = reverseStartTimes.find((start) => start < state.now) || 0;
-  const duration = nextStartTime - previousStartTime;
+
   const stillToDo = nextStartTime - now;
-  const minuteRemainder = stillToDo % 60;
-  const wholeMinutesRemaining = Math.floor(stillToDo / 60);
+
   const phaseNumber = startTimes.filter((t) => t <= now);
   const colour = phaseNumber.length % 2 ? 'green' : 'red';
 
@@ -224,15 +293,45 @@ interface DurationProps {
   width: number;
   colour: string;
 }
+export const DigitalTimer = component$(() => {
+  const { now, workoutDuration } = useHIITContext();
+  const state = useContext(InputContext);
+  const phaseStartTimes = () => {
+    const times = [0];
 
+    times.push(state.warmupDuration);
+    state.restDuration.forEach((rest) => {
+      const lastTime = times[times.length - 1];
+      times.push(lastTime + state.sprintDuration);
+      times.push(lastTime + state.sprintDuration + rest);
+    });
+    const lastTime = times[times.length - 1];
+    times.push(lastTime + state.cooldownDuration);
+
+    // console.log(times);
+
+    return times;
+  };
+
+  const startTimes = phaseStartTimes();
+  const nextStartTime = startTimes.find((start) => state.now < start) || workoutDuration;
+  const stillToDo = nextStartTime - now;
+  const minutes = Math.floor(stillToDo / 60);
+  const seconds = stillToDo - minutes * 60;
+  const secondsString = seconds.toString();
+
+  return (
+    <p>
+      {minutes}:{secondsString.padStart(2, '0')}
+    </p>
+  );
+});
 // converts from time domain to the angle domain
 export const Phase = component$<DurationProps>(({ startTime, duration, colour, width }) => {
   const { degreesPerSecond, labelSize } = useHIITContext();
-  const { now } = useContext(InputContext);
 
   const labelEndAngle = 90 + (360 * labelSize) / 2;
   const startAngle = labelEndAngle + startTime * degreesPerSecond;
-  const activePhase = startTime <= now && now < startTime + duration;
 
   return (
     //<svg className={activePhase ? 'glow' : ''}>
@@ -417,30 +516,43 @@ export default component$(() => {
 
   return (
     <>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox={`0, 0, ${state.svgWidth}, ${state.svgHeight}`}
-        width={state.svgWidth}
-        height={state.svgHeight}
-      >
-        <Label />
+      <div class="workout">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox={`0, 0, ${state.svgWidth}, ${state.svgHeight}`}
+          width={state.svgWidth}
+          height={state.svgHeight}
+        >
+          <Label />
 
-        <Warmup />
-        {new Array(state.restDuration.length).fill(0).map((_, index) => (
-          <Interval key={index} index={index} />
-        ))}
+          <Warmup />
+          {new Array(state.restDuration.length).fill(0).map((_, index) => (
+            <Interval key={index} index={index} />
+          ))}
 
-        {/*<CoolDown />*/}
-        <TimePointer time={state.now} />
-        <PhaseProgress />
-      </svg>
-
-      {/*<p>{state.currentRest}</p>*/}
-      <PlayPauseButton onClick={onPlayPause} />
-      <ResetButton />
-      <BackButton onClick={onBack} />
-      <ForwardButton onClick={onForward} />
-      <HeartChart />
+          {/*<CoolDown />*/}
+          <TimePointer time={state.now} />
+          <PhaseProgress />
+        </svg>
+        <div class="timer">
+          <DigitalTimer />
+        </div>
+      </div>
+      <div class="under">
+        <div>
+          <PlayPauseButton onClick={onPlayPause} />
+          <ResetButton />
+          <BackButton onClick={onBack} />
+          <ForwardButton onClick={onForward} />
+          <Plus5Button />
+          <Minus5Button />
+          <DuplicateButton />
+          <DeleteButton />
+        </div>
+        <div>
+          <HeartChart />
+        </div>
+      </div>
     </>
   );
 });

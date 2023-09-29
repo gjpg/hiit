@@ -41,7 +41,7 @@ export interface IntervalContext {
   cx: string;
   cy: string;
   now: number;
-  // currentRest?: number;
+  currentRest?: number;
 }
 export const InputContext = createContextId<IntervalContext>('docs.theme-context');
 

@@ -64,11 +64,9 @@ export const HeartChart = component$(() => {
         options: {
           elements: { point: { radius: 0 } },
           plugins: {
-            tooltip: {
-              enabled: true,
-            },
+            legend: { display: false },
+            tooltip: { enabled: false },
           },
-
           scales: {
             y: {
               beginAtZero: true,
