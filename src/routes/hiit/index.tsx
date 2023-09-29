@@ -1,4 +1,13 @@
-import { $, component$, createContextId, QRL, useContext, useContextProvider, useStore } from '@builder.io/qwik';
+import {
+  $,
+  component$,
+  createContextId,
+  QRL,
+  useContext,
+  useContextProvider,
+  useStore,
+  useVisibleTask$,
+} from '@builder.io/qwik';
 import { HeartChart } from '~/routes/hiit/heartchart';
 import { useHIITContext, InputContext, TimeContext, TimerStore, IntervalContext } from '~/routes/hiit/contexts';
 
@@ -342,13 +351,15 @@ export const Phase = component$<DurationProps>(({ startTime, duration, colour, w
 
 export const Warmup = component$(() => {
   const { warmupDuration, restColour, strokeWidth } = useHIITContext();
-  const { now } = useContext(InputContext);
   const ctx = useContext(InputContext);
+  const { now } = ctx;
   const activeWarmup = 0 <= now && now < warmupDuration;
 
-  if (activeWarmup) {
-    // ctx.currentRest = -1;
-  }
+  useVisibleTask$(() => {
+    if (activeWarmup) {
+      ctx.currentRest = -1;
+    }
+  });
 
   return (
     <svg class={activeWarmup ? 'glow' : ''}>
@@ -378,7 +389,7 @@ export const Interval = component$(({ index }: { index: number }) => {
   const activeInterval = startTime <= now && now < startTime + sprintDuration + restDuration[index];
 
   if (activeInterval) {
-    // ctx.currentRest = index;
+    ctx.currentRest = index;
   }
   return (
     <>
@@ -439,6 +450,7 @@ export default component$(() => {
     cx: '50%',
     cy: '50%',
     now: 0,
+    currentRest: -1,
   });
 
   //todo-lastTime isn't DRY
