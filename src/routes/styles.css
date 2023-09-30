@@ -292,3 +292,7 @@ button.button-small {
   padding-top: 250px;
 
 }
+
+.charts {
+  display: flex;
+}

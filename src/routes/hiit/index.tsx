@@ -8,7 +8,7 @@ import {
   useStore,
   useVisibleTask$,
 } from '@builder.io/qwik';
-import { HeartChart } from '~/routes/hiit/heartchart';
+import { BarChart, HeartChart } from '~/routes/hiit/heartchart';
 import { useHIITContext, InputContext, TimeContext, TimerStore, IntervalContext } from '~/routes/hiit/contexts';
 
 //https://codepen.io/jordanwillis/pen/BWxErp
@@ -561,9 +561,10 @@ export default component$(() => {
           <DuplicateButton />
           <DeleteButton />
         </div>
-        <div>
-          <HeartChart />
-        </div>
+      </div>
+      <div>
+        {/*<HeartChart />*/}
+        <BarChart />
       </div>
     </>
   );
