@@ -562,6 +562,8 @@ export default component$(() => {
           <DeleteButton />
         </div>
       </div>
+      <br />
+      <br />
       <div>
         {/*<HeartChart />*/}
         <BarChart />

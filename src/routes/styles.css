@@ -294,5 +294,7 @@ button.button-small {
 }
 
 .charts {
-  display: flex;
+  display: grid;
+  width: 100vw;
+  max-height: 10%;
 }
