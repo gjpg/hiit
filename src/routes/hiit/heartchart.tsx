@@ -39,7 +39,7 @@ export const PhaseHeartRates = component$<PhaseHeartRateProps>(({ dataset, phase
             x: {
               display: false, // Hide the x-axis labels
             },
-            y: { beginAtZero: true, display: false },
+            y: { beginAtZero: true, max: 16, display: false },
           },
         },
       });
@@ -56,8 +56,8 @@ export const PhaseHeartRates = component$<PhaseHeartRateProps>(({ dataset, phase
 export const BarChart = component$(() => {
   const dataset = [10, 15, 7, 12, 8, 11, 9, 14, 0, 10];
   const dataset1 = [...dataset, ...dataset, ...dataset, ...dataset];
-  const dataset2 = [...dataset, ...dataset];
-  const dataset3 = [1, 5, 6, 3, 2];
+  const dataset2 = [...dataset, ...dataset, ...dataset];
+  const dataset3 = [10, 5, 6, 3, 2, 10];
   const allPhases = [dataset1, dataset3, dataset2];
   const totalDataPoints = allPhases.reduce((tally, current) => tally + current.length, 0);
 
