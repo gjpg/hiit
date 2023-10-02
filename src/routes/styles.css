@@ -293,8 +293,43 @@ button.button-small {
 
 }
 
-.charts {
+.hrchart {
   display: grid;
-  width: 100vw;
-  max-height: 10%;
+  position: relative;
+  width: 50%;
+  height: 100px;
 }
+
+.hrbackground {
+  grid-row: 1/4;
+  opacity: 100%;
+
+}
+
+.heartrate {
+
+  grid-column: 1/-1;
+  position: absolute;
+  top:0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+}
+
+.myChart {
+  width:100%;
+}
+/*.hrbackground {*/
+/*grid-row: 1;*/
+/*  z-index: 0;*/
+/*  position: relative;*/
+
+
+/*}*/
+
+/*.heartrate {*/
+/*  grid-row: 1;*/
+/*  z-index: 1;*/
+/*position: absolute;*/
+/*}*/

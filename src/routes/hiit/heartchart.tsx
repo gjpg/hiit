@@ -48,7 +48,7 @@ export const PhaseHeartRates = component$<PhaseHeartRateProps>(({ dataset, phase
 
   return (
     <div style={{ backgroundColor: phaseColour }}>
-      <canvas style={{ height: '100%' }} ref={chart}></canvas>
+      <canvas ref={chart}></canvas>
     </div>
   );
 });
@@ -62,14 +62,22 @@ export const BarChart = component$(() => {
   const totalDataPoints = allPhases.reduce((tally, current) => tally + current.length, 0);
 
   return (
-    <div
-      class="charts"
-      style={{ gridTemplateColumns: `${allPhases.map((ds) => (ds.length * 100) / totalDataPoints + '%').join(' ')}` }}
-    >
-      {allPhases.map((p, i) => (
-        <PhaseHeartRates dataset={p} phaseColour={i % 2 ? 'red' : 'green'} />
-      ))}
-    </div>
+    <>
+      <br />
+      <div
+        class="hrchart"
+        style={{ gridTemplateColumns: `${allPhases.map((ds) => (ds.length * 100) / totalDataPoints + '%').join(' ')}` }}
+      >
+        {allPhases.map((p, i) => (
+          <div class="hrbackground" style={{ backgroundColor: i % 2 ? 'red' : 'green' }}>
+            &nbsp;
+          </div>
+        ))}
+        <div class="heartrate">
+          <PhaseHeartRates dataset={allPhases.flat()} phaseColour="" />
+        </div>
+      </div>
+    </>
   );
 });
 
@@ -152,7 +160,7 @@ export const HeartChart = component$(() => {
 
   return (
     <div>
-      <canvas ref={myChart} id="myChart"></canvas>
+      <canvas ref={myChart} class="myChart"></canvas>
     </div>
   );
 });
