@@ -59,11 +59,15 @@ export const BarChart = component$(() => {
   const dataset2 = [...dataset, ...dataset];
   const dataset3 = [1, 5, 6, 3, 2];
   const allPhases = [dataset1, dataset3, dataset2];
+  const totalDataPoints = allPhases.reduce((tally, current) => tally + current.length, 0);
 
   return (
-    <div class="charts" style={{ gridTemplateColumns: `${allPhases.map((ds) => ds.length + 'fr').join(' ')}` }}>
+    <div
+      class="charts"
+      style={{ gridTemplateColumns: `${allPhases.map((ds) => (ds.length * 100) / totalDataPoints + '%').join(' ')}` }}
+    >
       {allPhases.map((p, i) => (
-        <PhaseHeartRates dataset={p} phaseColour={i % 2 ? 'green' : 'red'} />
+        <PhaseHeartRates dataset={p} phaseColour={i % 2 ? 'red' : 'green'} />
       ))}
     </div>
   );
