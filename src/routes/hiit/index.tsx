@@ -475,6 +475,10 @@ export default component$(() => {
     timer: undefined,
   });
 
+  const phaseHeartRates = useStore<{ allPhases: number[][] }>({
+    allPhases: [[1, 2, 3, 4, 5, 6], [6, 5, 4, 3, 4], []],
+  });
+
   useContextProvider(InputContext, state);
   useContextProvider(TimeContext, timeState);
 
@@ -484,7 +488,14 @@ export default component$(() => {
       clearInterval(timeState.timer);
       timeState.timer = undefined;
     } else {
-      timeState.timer = setInterval(() => (state.now += 1), 1000);
+      timeState.timer = setInterval(() => {
+        state.now += 1;
+        const lastPhase = phaseHeartRates.allPhases[phaseHeartRates.allPhases.length - 1];
+
+        lastPhase.push(45);
+
+        // console.log(phaseHeartRates);
+      }, 1000);
     }
 
     //todo- set bounds 0 <= now <= workoutDuration.
@@ -566,7 +577,7 @@ export default component$(() => {
       <br />
       <div>
         {/*<HeartChart />*/}
-        <BarChart />
+        <BarChart phaseHeartRates={phaseHeartRates.allPhases} />
       </div>
     </>
   );
