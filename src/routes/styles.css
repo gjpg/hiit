@@ -297,7 +297,7 @@ button.button-small {
   display: grid;
   position: relative;
   width: 50%;
-  height: 100px;
+  height: 150px;
 }
 
 .hrbackground {
@@ -320,6 +320,10 @@ button.button-small {
 .myChart {
   width:100%;
 }
+
+.chartjs-container canvas {
+}
+
 /*.hrbackground {*/
 /*grid-row: 1;*/
 /*  z-index: 0;*/

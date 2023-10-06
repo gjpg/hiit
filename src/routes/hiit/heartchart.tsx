@@ -3,15 +3,16 @@ import { Chart, ChartDataset, Filler, registerables } from 'chart.js';
 import { InputContext, useHIITContext } from '~/routes/hiit/contexts';
 
 interface PhaseHeartRateProps {
-  dataset: number[];
+  dataset: number[][];
   phaseColour: string;
 }
 export const PhaseHeartRates = component$<PhaseHeartRateProps>(({ dataset, phaseColour }) => {
   const chart = useSignal<HTMLCanvasElement>();
-
+  console.log('PhaseHeartRates rendered', dataset);
   useVisibleTask$(() => {
     if (chart?.value) {
-      const allLabels = dataset.map((d) => `${d}`);
+      console.log('Hello from chartjs', dataset);
+      const allLabels = dataset.flat().map((d) => `${d}`);
       Chart.register(Filler, ...registerables);
       new Chart(chart.value, {
         type: 'line',
@@ -20,7 +21,7 @@ export const PhaseHeartRates = component$<PhaseHeartRateProps>(({ dataset, phase
           datasets: [
             {
               label: 'Combined Dataset',
-              data: dataset,
+              data: dataset.flat(),
               borderColor: 'rgba(75, 192, 192, 1)',
               borderWidth: 2,
               fill: false,
@@ -46,20 +47,36 @@ export const PhaseHeartRates = component$<PhaseHeartRateProps>(({ dataset, phase
     }
   });
 
+  const maxHeight = 150;
+
+  //
   return (
-    <div style={{ backgroundColor: phaseColour }}>
-      <canvas ref={chart}></canvas>
+    <div class="chartjs-container">
+      <style>
+        {`
+        .chartjs-canvas {
+        max-height: ${maxHeight}px;
+      }
+      `}
+      </style>
+      <canvas class="chartjs-canvas" style={{ width: '100%' }} ref={chart}></canvas>
+      <pre>{JSON.stringify(dataset)}</pre>
     </div>
   );
 });
-
-export const BarChart = component$(() => {
-  const dataset = [10, 15, 7, 12, 8, 11, 9, 14, 0, 10];
-  const dataset1 = [...dataset, ...dataset, ...dataset, ...dataset];
-  const dataset2 = [...dataset, ...dataset, ...dataset];
-  const dataset3 = [10, 5, 6, 3, 2, 10];
-  const allPhases = [dataset1, dataset3, dataset2];
+interface ChartProps {
+  phaseHeartRates: number[][];
+}
+export const BarChart = component$<ChartProps>(({ phaseHeartRates }) => {
+  // const dataset = [10, 15, 7, 12, 8, 11, 9, 14, 0, 10];
+  // const dataset1 = [...dataset, ...dataset, ...dataset, ...dataset];
+  // const dataset2 = [...dataset, ...dataset, ...dataset];
+  // const dataset3 = [10, 5, 6, 3, 2, 10];
+  // const allPhases = [dataset1, dataset3, dataset2];
+  const allPhases = phaseHeartRates;
   const totalDataPoints = allPhases.reduce((tally, current) => tally + current.length, 0);
+
+  console.log('BarChart', phaseHeartRates);
 
   return (
     <>
@@ -69,12 +86,12 @@ export const BarChart = component$(() => {
         style={{ gridTemplateColumns: `${allPhases.map((ds) => (ds.length * 100) / totalDataPoints + '%').join(' ')}` }}
       >
         {allPhases.map((p, i) => (
-          <div class="hrbackground" style={{ backgroundColor: i % 2 ? 'red' : 'green' }}>
+          <div key={i} class="hrbackground" style={{ backgroundColor: i % 2 ? 'red' : 'green' }}>
             &nbsp;
           </div>
         ))}
         <div class="heartrate">
-          <PhaseHeartRates dataset={allPhases.flat()} phaseColour="" />
+          <PhaseHeartRates dataset={phaseHeartRates} phaseColour="" />
         </div>
       </div>
     </>
