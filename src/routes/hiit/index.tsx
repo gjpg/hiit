@@ -10,6 +10,8 @@ import {
 } from '@builder.io/qwik';
 import { BarChart, HeartChart } from '~/routes/hiit/heartchart';
 import { useHIITContext, InputContext, TimeContext, TimerStore, IntervalContext } from '~/routes/hiit/contexts';
+import { supabase } from '~/utils/supabase';
+import { Profile } from '~/routes/hiit/profiles';
 
 //https://codepen.io/jordanwillis/pen/BWxErp
 //https://www.chartjs.org/docs/latest/samples/area/line-datasets.html
@@ -452,7 +454,6 @@ export default component$(() => {
     now: 0,
     currentRest: -1,
   });
-
   //todo-lastTime isn't DRY
   const phaseStartTimes = $(() => {
     const times = [0];
@@ -579,6 +580,7 @@ export default component$(() => {
         {/*<HeartChart />*/}
         <BarChart phaseHeartRates={phaseHeartRates.allPhases} />
       </div>
+      <Profile />
     </>
   );
 });
