@@ -27,7 +27,7 @@ export default component$(() => {
 
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (data) {
+      if (data && !error) {
         message.message = 'Success, redirecting';
         message.status = 'success';
 

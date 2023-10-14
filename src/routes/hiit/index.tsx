@@ -493,7 +493,7 @@ export default component$(() => {
         state.now += 1;
         const lastPhase = phaseHeartRates.allPhases[phaseHeartRates.allPhases.length - 1];
 
-        lastPhase.push(45);
+        lastPhase.push(5);
 
         // console.log(phaseHeartRates);
       }, 1000);

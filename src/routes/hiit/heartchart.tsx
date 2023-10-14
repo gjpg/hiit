@@ -1,4 +1,12 @@
-import { component$, useContext, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import {
+  component$,
+  type NoSerialize,
+  noSerialize,
+  useContext,
+  useSignal,
+  useTask$,
+  useVisibleTask$,
+} from '@builder.io/qwik';
 import { Chart, ChartDataset, Filler, registerables } from 'chart.js';
 import { InputContext, useHIITContext } from '~/routes/hiit/contexts';
 
@@ -7,43 +15,58 @@ interface PhaseHeartRateProps {
   phaseColour: string;
 }
 export const PhaseHeartRates = component$<PhaseHeartRateProps>(({ dataset, phaseColour }) => {
-  const chart = useSignal<HTMLCanvasElement>();
-  console.log('PhaseHeartRates rendered', dataset);
+  const canvas = useSignal<HTMLCanvasElement>();
+  const chart = useSignal<NoSerialize<Chart>>();
+
+  if (chart?.value) {
+    const { labels, datasets } = chart.value?.data;
+    const lastDs = dataset[dataset.length - 1];
+    const lastDatum = lastDs[lastDs.length - 1];
+
+    console.log('PhaseHeartRates component updates chart', lastDatum);
+
+    labels?.push('New measurement');
+    datasets?.[datasets.length - 1].data.push(lastDatum);
+    chart.value?.update();
+  }
+
   useVisibleTask$(() => {
-    if (chart?.value) {
-      console.log('Hello from chartjs', dataset);
+    if (canvas?.value) {
       const allLabels = dataset.flat().map((d) => `${d}`);
       Chart.register(Filler, ...registerables);
-      new Chart(chart.value, {
-        type: 'line',
-        data: {
-          labels: allLabels,
-          datasets: [
-            {
-              label: 'Combined Dataset',
-              data: dataset.flat(),
-              borderColor: 'rgba(75, 192, 192, 1)',
-              borderWidth: 2,
-              fill: false,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          elements: { point: { radius: 0 } },
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false },
+      chart.value = noSerialize(
+        new Chart(canvas.value, {
+          type: 'line',
+          data: {
+            labels: allLabels,
+            datasets: [
+              {
+                label: 'Combined Dataset',
+                data: dataset.flat(),
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2,
+                fill: false,
+              },
+            ],
           },
-          scales: {
-            x: {
-              display: false, // Hide the x-axis labels
+          options: {
+            animation: false,
+            responsive: true,
+            maintainAspectRatio: false,
+            elements: { point: { radius: 0 } },
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: false },
             },
-            y: { beginAtZero: true, max: 16, display: false },
+            scales: {
+              x: {
+                display: false, // Hide the x-axis labels
+              },
+              y: { beginAtZero: true, max: 16, display: false },
+            },
           },
-        },
-      });
+        }),
+      );
     }
   });
 
@@ -52,14 +75,14 @@ export const PhaseHeartRates = component$<PhaseHeartRateProps>(({ dataset, phase
   //
   return (
     <div class="chartjs-container">
-      <style>
-        {`
+      <style
+        dangerouslySetInnerHTML={`
         .chartjs-canvas {
         max-height: ${maxHeight}px;
       }
       `}
-      </style>
-      <canvas class="chartjs-canvas" style={{ width: '100%' }} ref={chart}></canvas>
+      />
+      <canvas class="chartjs-canvas" style={{ width: '100%' }} ref={canvas}></canvas>
       <pre>{JSON.stringify(dataset)}</pre>
     </div>
   );
@@ -75,8 +98,6 @@ export const BarChart = component$<ChartProps>(({ phaseHeartRates }) => {
   // const allPhases = [dataset1, dataset3, dataset2];
   const allPhases = phaseHeartRates;
   const totalDataPoints = allPhases.reduce((tally, current) => tally + current.length, 0);
-
-  console.log('BarChart', phaseHeartRates);
 
   return (
     <>
@@ -146,7 +167,6 @@ export const HeartChart = component$(() => {
       tension: 0,
     });
   }
-  // console.log(datasets);
 
   useVisibleTask$(() => {
     if (myChart?.value) {
