@@ -5,6 +5,7 @@ import {
   QRL,
   useContext,
   useContextProvider,
+  useResource$,
   useStore,
   useVisibleTask$,
 } from '@builder.io/qwik';
@@ -455,6 +456,23 @@ export default component$(() => {
     now: 0,
     currentRest: -1,
   });
+  // @ts-ignore
+  const { value } = useResource$(() => {
+    return supabase
+      .from('workouts')
+      .select()
+      .limit(1)
+      .then((workout) => {
+        console.log({ workout: workout.data?.[0] });
+        // Object.assign(state, workout.data?.[0]);
+        console.log('state =', state);
+        state.restColour = workout.data?.[0].restColour;
+        console.log('state =', state);
+        console.log(state.restColour);
+        return workout;
+      });
+  });
+
   //todo-lastTime isn't DRY
   const phaseStartTimes = $(() => {
     const times = [0];
