@@ -85,7 +85,7 @@ export const Plus5Button = component$((onClick) => {
     <button
       onClick$={() => {
         if (currentRest && currentRest >= 0) {
-          ctx.restDuration[currentRest] += 20;
+          ctx.restDurations[currentRest] += 20;
         }
       }}
     >
@@ -103,9 +103,9 @@ export const Minus5Button = component$((onClick) => {
     <button
       onClick$={() => {
         if (currentRest && currentRest >= 0) {
-          ctx.restDuration[currentRest] >= 20
-            ? (ctx.restDuration[currentRest] -= 20)
-            : (ctx.restDuration[currentRest] = 0);
+          ctx.restDurations[currentRest] >= 20
+            ? (ctx.restDurations[currentRest] -= 20)
+            : (ctx.restDurations[currentRest] = 0);
         }
       }}
     >
@@ -116,13 +116,13 @@ export const Minus5Button = component$((onClick) => {
 
 export const DuplicateButton = component$(() => {
   const ctx = useContext(InputContext);
-  const { currentRest, restDuration } = ctx;
+  const { currentRest, restDurations } = ctx;
 
   return (
     <button
       onClick$={() => {
         if (currentRest && currentRest >= 0) {
-          restDuration.splice(currentRest + 1, 0, restDuration[currentRest]);
+          restDurations.splice(currentRest + 1, 0, restDurations[currentRest]);
         }
       }}
     >
@@ -133,13 +133,13 @@ export const DuplicateButton = component$(() => {
 
 export const DeleteButton = component$(() => {
   const ctx = useContext(InputContext);
-  const { currentRest, restDuration } = ctx;
+  const { currentRest, restDurations } = ctx;
 
   return (
     <button
       onClick$={() => {
         if (currentRest && currentRest >= 0) {
-          restDuration.splice(currentRest, 1);
+          restDurations.splice(currentRest, 1);
         }
       }}
     >
@@ -228,7 +228,7 @@ export const PhaseProgress = component$(() => {
     const times = [0];
 
     times.push(state.warmupDuration);
-    state.restDuration.forEach((rest) => {
+    state.restDurations.forEach((rest) => {
       const lastTime = times[times.length - 1];
       times.push(lastTime + state.sprintDuration);
       times.push(lastTime + state.sprintDuration + rest);
@@ -311,7 +311,7 @@ export const DigitalTimer = component$(() => {
     const times = [0];
 
     times.push(state.warmupDuration);
-    state.restDuration.forEach((rest) => {
+    state.restDurations.forEach((rest) => {
       const lastTime = times[times.length - 1];
       times.push(lastTime + state.sprintDuration);
       times.push(lastTime + state.sprintDuration + rest);
@@ -372,23 +372,24 @@ export const Warmup = component$(() => {
 
 //todo-intervalsSoFar redefined
 export const CoolDown = component$(() => {
-  const { cooldownDuration, restColour, strokeWidth, restDuration, sprintDuration, warmupDuration } = useHIITContext();
-  const intervalsSoFar = restDuration.reduce((tally, current) => tally + current + sprintDuration, 0);
+  const { cooldownDuration, restColour, strokeWidth, restDurations, sprintDuration, warmupDuration } = useHIITContext();
+  const intervalsSoFar = restDurations.reduce((tally, current) => tally + current + sprintDuration, 0);
   const startTime = warmupDuration + intervalsSoFar;
 
   return <Phase startTime={startTime} duration={cooldownDuration} colour={restColour} width={strokeWidth} />;
 });
 
 export const Interval = component$(({ index }: { index: number }) => {
-  const { sprintColour, restColour, sprintDuration, strokeWidth, restDuration, warmupDuration } = useHIITContext();
+  const { restColour } = useContext(InputContext);
+  const { sprintColour, sprintDuration, strokeWidth, restDurations, warmupDuration } = useHIITContext();
   const { now } = useContext(InputContext);
   const ctx = useContext(InputContext);
 
-  const intervalsSoFar = restDuration.slice(0, index).reduce((tally, current) => tally + current + sprintDuration, 0);
+  const intervalsSoFar = restDurations.slice(0, index).reduce((tally, current) => tally + current + sprintDuration, 0);
   const startTime = warmupDuration + intervalsSoFar;
 
   // const sprintOrRest = intervalsSoFar % 2;
-  const activeInterval = startTime <= now && now < startTime + sprintDuration + restDuration[index];
+  const activeInterval = startTime <= now && now < startTime + sprintDuration + restDurations[index];
 
   if (activeInterval) {
     ctx.currentRest = index;
@@ -399,7 +400,7 @@ export const Interval = component$(({ index }: { index: number }) => {
         <Phase startTime={startTime} duration={sprintDuration} width={strokeWidth} colour={sprintColour} />
         <Phase
           startTime={startTime + sprintDuration}
-          duration={restDuration[index]}
+          duration={restDurations[index]}
           width={strokeWidth}
           colour={restColour}
         />
@@ -438,9 +439,9 @@ export const Label = component$(({}) => {
 
 export default component$(() => {
   const state = useStore<IntervalContext>({
-    restColour: 'green',
+    restColour: 'orange',
     sprintColour: 'red',
-    restDuration: [90, 75, 60, 45, 35, 30, 30, 30, 30, 40, 180],
+    restDurations: [90, 75, 60, 45, 35, 30, 30, 30, 30, 40, 180],
     sprintDuration: 30,
     radius: 110,
     warmupDuration: 300,
@@ -459,7 +460,7 @@ export default component$(() => {
     const times = [0];
 
     times.push(state.warmupDuration);
-    state.restDuration.forEach((rest) => {
+    state.restDurations.forEach((rest) => {
       const lastTime = times[times.length - 1];
       times.push(lastTime + state.sprintDuration);
       times.push(lastTime + state.sprintDuration + rest);
@@ -550,7 +551,7 @@ export default component$(() => {
           <Label />
 
           <Warmup />
-          {new Array(state.restDuration.length).fill(0).map((_, index) => (
+          {new Array(state.restDurations.length).fill(0).map((_, index) => (
             <Interval key={index} index={index} />
           ))}
 

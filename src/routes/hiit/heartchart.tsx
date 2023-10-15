@@ -126,7 +126,7 @@ export const HeartChart = component$(() => {
   const phaseStartTimes = () => {
     const times = [0, state.warmupDuration];
 
-    state.restDuration.forEach((rest) => {
+    state.restDurations.forEach((rest) => {
       const lastTime = times[times.length - 1];
       times.push(lastTime + state.sprintDuration);
       times.push(lastTime + state.sprintDuration + rest);
