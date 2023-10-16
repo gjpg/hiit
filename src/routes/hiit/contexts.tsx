@@ -2,10 +2,10 @@ import { createContextId, useContext } from '@builder.io/qwik';
 
 export function useHIITContext() {
   const ctx = useContext(InputContext);
-  const { radius, warmupDuration, cooldownDuration, restDurations, sprintDuration, svgWidth, svgHeight } = ctx;
+  const { radius, warmupDuration, restDurations, sprintDuration, svgWidth, svgHeight } = ctx;
   const labelSize = 0.3;
   const workoutDuration =
-    warmupDuration + cooldownDuration + restDurations.reduce((tally, current) => tally + current + sprintDuration, 0);
+    warmupDuration + restDurations.reduce((tally, current) => tally + current + sprintDuration, 0);
   const exerciseProgramAngle = (1 - labelSize) * 360;
   const degreesPerSecond = exerciseProgramAngle / workoutDuration;
   const centreWidth = svgWidth / 2;
@@ -26,15 +26,21 @@ export function useHIITContext() {
   };
 }
 
-export interface IntervalContext {
+export interface WorkoutContext {
+  created_at: Date;
+  owner?: string;
+  workoutID: string;
+  title: string;
   restColour: string;
   sprintColour: string;
   labelColour: string;
-  radius: number;
   restDurations: number[];
   sprintDuration: number;
   warmupDuration: number;
-  cooldownDuration: number;
+}
+
+export interface IntervalContext extends WorkoutContext {
+  radius: number;
   svgWidth: number;
   svgHeight: number;
   strokeWidth: number;
@@ -42,8 +48,6 @@ export interface IntervalContext {
   cy: string;
   now: number;
   currentRest?: number;
-  workoutID: string;
-  title: string;
 }
 export const InputContext = createContextId<IntervalContext>('docs.theme-context');
 

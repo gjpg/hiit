@@ -11,7 +11,14 @@ import {
   useVisibleTask$,
 } from '@builder.io/qwik';
 import { BarChart, HeartChart } from '~/routes/hiit/heartchart';
-import { useHIITContext, InputContext, TimeContext, TimerStore, IntervalContext } from '~/routes/hiit/contexts';
+import {
+  useHIITContext,
+  InputContext,
+  TimeContext,
+  TimerStore,
+  IntervalContext,
+  WorkoutContext,
+} from '~/routes/hiit/contexts';
 import { supabase } from '~/utils/supabase';
 import { Profile } from '~/routes/hiit/profiles';
 import { stat } from 'fs';
@@ -173,7 +180,7 @@ export const SaveAsButton = component$(() => {
 
   const handleSaveAsEvent = $(async (event: any) => {
     const { sprintColour, sprintDuration, restDurations, restColour, warmupDuration, labelColour, title } = state;
-    const workoutID = randomUUID();
+    const workoutID = crypto.randomUUID();
     const { error } = await supabase.from('workouts').insert({
       sprintColour,
       sprintDuration,
@@ -292,7 +299,7 @@ export const PhaseProgress = component$(() => {
       times.push(lastTime + state.sprintDuration + rest);
     });
     const lastTime = times[times.length - 1];
-    times.push(lastTime + state.cooldownDuration);
+    times.push(lastTime);
 
     // console.log(times);
 
@@ -375,7 +382,7 @@ export const DigitalTimer = component$(() => {
       times.push(lastTime + state.sprintDuration + rest);
     });
     const lastTime = times[times.length - 1];
-    times.push(lastTime + state.cooldownDuration);
+    times.push(lastTime);
 
     // console.log(times);
 
@@ -426,15 +433,6 @@ export const Warmup = component$(() => {
       <Phase startTime={0} duration={warmupDuration} colour={restColour} width={strokeWidth} />
     </svg>
   );
-});
-
-//todo-intervalsSoFar redefined
-export const CoolDown = component$(() => {
-  const { cooldownDuration, restColour, strokeWidth, restDurations, sprintDuration, warmupDuration } = useHIITContext();
-  const intervalsSoFar = restDurations.reduce((tally, current) => tally + current + sprintDuration, 0);
-  const startTime = warmupDuration + intervalsSoFar;
-
-  return <Phase startTime={startTime} duration={cooldownDuration} colour={restColour} width={strokeWidth} />;
 });
 
 export const Interval = component$(({ index }: { index: number }) => {
@@ -495,7 +493,7 @@ export const Label = component$(({}) => {
   );
 });
 
-export default component$(() => {
+const Workout = component$<{ workout: WorkoutContext }>(({ workout }) => {
   const state = useStore<IntervalContext>({
     restColour: 'orange',
     sprintColour: 'red',
@@ -503,7 +501,6 @@ export default component$(() => {
     sprintDuration: 30,
     radius: 110,
     warmupDuration: 300,
-    cooldownDuration: 0,
     labelColour: 'blue',
     svgWidth: 400,
     svgHeight: 400,
@@ -512,22 +509,10 @@ export default component$(() => {
     cy: '50%',
     now: 0,
     currentRest: -1,
-    workoutID: '',
+    workoutID: crypto.randomUUID(),
     title: 'name',
-  });
-
-  // load first workout on initial render
-  useTask$(async () => {
-    const { data, error, count } = await supabase.from('workouts').select().limit(1);
-
-    console.log('Data returned from Supabase', data, error, count);
-    if (!error && data && data.length === 1) {
-      const workout = data[0];
-
-      Object.assign(state, workout);
-
-      console.log({ state, workout });
-    }
+    created_at: new Date(),
+    ...workout,
   });
 
   //todo-lastTime isn't DRY
@@ -541,7 +526,7 @@ export default component$(() => {
       times.push(lastTime + state.sprintDuration + rest);
     });
     const lastTime = times[times.length - 1];
-    times.push(lastTime + state.cooldownDuration);
+    times.push(lastTime);
 
     // console.log(times);
 
@@ -661,6 +646,41 @@ export default component$(() => {
       <SaveButton />
       <SaveAsButton />
       <WorkoutTitleEntry />
+    </>
+  );
+});
+
+export default component$(() => {
+  const workouts = useStore({ allWorkouts: [] as WorkoutContext[], currentWorkoutIndex: 0 });
+
+  // load first workout on initial render
+  useTask$(async () => {
+    const { data, error, count } = await supabase.from('workouts').select();
+
+    console.log('Data returned from Supabase', data, error, count);
+    if (!error && data && data.length > 0) {
+      workouts.allWorkouts = data;
+      workouts.currentWorkoutIndex = 0;
+    }
+  });
+
+  const previous = $(() => {
+    if (workouts.currentWorkoutIndex > 0) {
+      workouts.currentWorkoutIndex--;
+    }
+  });
+
+  const next = $(() => {
+    if (workouts.currentWorkoutIndex < workouts.allWorkouts.length - 1) {
+      workouts.currentWorkoutIndex++;
+    }
+  });
+
+  return (
+    <>
+      <button onClick$={previous}>Previous</button>
+      <button onClick$={next}>Next</button>
+      <Workout key={workouts.currentWorkoutIndex} workout={workouts.allWorkouts[workouts.currentWorkoutIndex]} />
     </>
   );
 });

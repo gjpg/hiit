@@ -13,6 +13,7 @@ export default component$(() => {
     console.log('SignOut error:', error);
     await nav('/login');
   });
+
   return (
     <header class={styles.header}>
       <div class={['container', styles.wrapper]}>
