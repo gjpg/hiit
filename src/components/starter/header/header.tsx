@@ -2,12 +2,16 @@ import { $, component$ } from '@builder.io/qwik';
 import { QwikLogo } from '../icons/qwik';
 import styles from './header.module.css';
 import { supabase } from '~/utils/supabase';
+import { useNavigate } from '@builder.io/qwik-city';
 
 export default component$(() => {
+  const nav = useNavigate();
+
   const handleSignOutEvent = $(async (event: any) => {
     const { error } = await supabase.auth.signOut();
 
     console.log('SignOut error:', error);
+    await nav('/login');
   });
   return (
     <header class={styles.header}>
