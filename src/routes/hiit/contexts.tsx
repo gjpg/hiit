@@ -42,6 +42,8 @@ export interface IntervalContext {
   cy: string;
   now: number;
   currentRest?: number;
+  workoutID: string;
+  title: string;
 }
 export const InputContext = createContextId<IntervalContext>('docs.theme-context');
 

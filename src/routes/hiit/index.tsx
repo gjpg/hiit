@@ -7,12 +7,15 @@ import {
   useContextProvider,
   useResource$,
   useStore,
+  useTask$,
   useVisibleTask$,
 } from '@builder.io/qwik';
 import { BarChart, HeartChart } from '~/routes/hiit/heartchart';
 import { useHIITContext, InputContext, TimeContext, TimerStore, IntervalContext } from '~/routes/hiit/contexts';
 import { supabase } from '~/utils/supabase';
 import { Profile } from '~/routes/hiit/profiles';
+import { stat } from 'fs';
+import { randomUUID } from 'crypto';
 
 //https://codepen.io/jordanwillis/pen/BWxErp
 //https://www.chartjs.org/docs/latest/samples/area/line-datasets.html
@@ -149,6 +152,60 @@ export const DeleteButton = component$(() => {
   );
 });
 
+export const SaveButton = component$(() => {
+  const state = useContext(InputContext);
+
+  const handleSaveEvent = $(async (event: any) => {
+    const { workoutID, sprintColour, sprintDuration, restDurations, restColour, warmupDuration, labelColour, title } =
+      state;
+    const { error } = await supabase
+      .from('workouts')
+      .update({ sprintColour, sprintDuration, restDurations, restColour, warmupDuration, labelColour, title })
+      .eq('workoutID', workoutID);
+
+    console.log('Save error:', error);
+  });
+  return <button onClick$={handleSaveEvent}> Save </button>;
+});
+
+export const SaveAsButton = component$(() => {
+  const state = useContext(InputContext);
+
+  const handleSaveAsEvent = $(async (event: any) => {
+    const { sprintColour, sprintDuration, restDurations, restColour, warmupDuration, labelColour, title } = state;
+    const workoutID = randomUUID();
+    const { error } = await supabase.from('workouts').insert({
+      sprintColour,
+      sprintDuration,
+      restDurations,
+      restColour,
+      warmupDuration,
+      labelColour,
+      title,
+      workoutID,
+    });
+
+    state.workoutID = workoutID;
+    console.log('Save error:', error);
+  });
+  return <button onClick$={handleSaveAsEvent}> Save As </button>;
+});
+
+export const WorkoutTitleEntry = component$(() => {
+  const ctx = useContext(InputContext);
+  const handleChangeEvent = $(async (event: any) => {
+    console.log(event.target.value);
+
+    ctx.title = event.target.value;
+  });
+
+  return (
+    <label>
+      Workout Name
+      <input name="title" type="text" value={ctx.title} onChange$={handleChangeEvent} />
+    </label>
+  );
+});
 interface ArcProps {
   startAngle: number; // 0 -> 360
   endAngle: number; // 0 -> 360
@@ -442,7 +499,7 @@ export default component$(() => {
   const state = useStore<IntervalContext>({
     restColour: 'orange',
     sprintColour: 'red',
-    restDurations: [90, 75, 60, 45, 35, 30, 30, 30, 30, 40, 180],
+    restDurations: [90, 75, 60, 80],
     sprintDuration: 30,
     radius: 110,
     warmupDuration: 300,
@@ -455,22 +512,22 @@ export default component$(() => {
     cy: '50%',
     now: 0,
     currentRest: -1,
+    workoutID: '',
+    title: 'name',
   });
-  // @ts-ignore
-  const { value } = useResource$(() => {
-    return supabase
-      .from('workouts')
-      .select()
-      .limit(1)
-      .then((workout) => {
-        console.log({ workout: workout.data?.[0] });
-        // Object.assign(state, workout.data?.[0]);
-        console.log('state =', state);
-        state.restColour = workout.data?.[0].restColour;
-        console.log('state =', state);
-        console.log(state.restColour);
-        return workout;
-      });
+
+  // load first workout on initial render
+  useTask$(async () => {
+    const { data, error, count } = await supabase.from('workouts').select().limit(1);
+
+    console.log('Data returned from Supabase', data, error, count);
+    if (!error && data && data.length === 1) {
+      const workout = data[0];
+
+      Object.assign(state, workout);
+
+      console.log({ state, workout });
+    }
   });
 
   //todo-lastTime isn't DRY
@@ -559,6 +616,7 @@ export default component$(() => {
 
   return (
     <>
+      <h1>{state.title}</h1>
       <div class="workout">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -600,6 +658,9 @@ export default component$(() => {
         <BarChart phaseHeartRates={phaseHeartRates.allPhases} />
       </div>
       <Profile />
+      <SaveButton />
+      <SaveAsButton />
+      <WorkoutTitleEntry />
     </>
   );
 });
