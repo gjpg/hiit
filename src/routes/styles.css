@@ -324,6 +324,20 @@ button.button-small {
 .chartjs-container canvas {
 }
 
+.selected-tag {
+  background-color: cyan;
+  border-color: black;
+  border-width: 10px;
+  color: black;
+}
+
+.unselected-tag {
+  background-color: grey;
+  border-color: darkgray;
+  border-width: 10px;
+  color: black;
+}
+
 /*.hrbackground {*/
 /*grid-row: 1;*/
 /*  z-index: 0;*/
