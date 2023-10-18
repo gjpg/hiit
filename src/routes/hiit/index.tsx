@@ -1,16 +1,13 @@
 import {
   $,
   component$,
-  createContextId,
   QRL,
   useContext,
   useContextProvider,
-  useResource$,
   useStore,
   useTask$,
   useVisibleTask$,
 } from '@builder.io/qwik';
-import { BarChart, HeartChart } from '~/routes/hiit/heartchart';
 import {
   useHIITContext,
   InputContext,
@@ -18,11 +15,10 @@ import {
   TimerStore,
   IntervalContext,
   WorkoutContext,
+  GlobalContext,
+  GlobalStore,
 } from '~/routes/hiit/contexts';
 import { supabase } from '~/utils/supabase';
-import { Profile } from '~/routes/hiit/profiles';
-import { stat } from 'fs';
-import { randomUUID } from 'crypto';
 
 //https://codepen.io/jordanwillis/pen/BWxErp
 //https://www.chartjs.org/docs/latest/samples/area/line-datasets.html
@@ -89,9 +85,9 @@ import { randomUUID } from 'crypto';
 
 export const Plus5Button = component$((onClick) => {
   const ctx = useContext(InputContext);
+
   const { currentRest } = ctx;
 
-  // const currentPhase = ;
   return (
     <button
       onClick$={() => {
@@ -107,7 +103,6 @@ export const Plus5Button = component$((onClick) => {
 
 export const Minus5Button = component$((onClick) => {
   const ctx = useContext(InputContext);
-  // const currentPhase = ;
   const { currentRest } = ctx;
 
   return (
@@ -127,6 +122,7 @@ export const Minus5Button = component$((onClick) => {
 
 export const DuplicateButton = component$(() => {
   const ctx = useContext(InputContext);
+
   const { currentRest, restDurations } = ctx;
 
   return (
@@ -335,9 +331,10 @@ export const Pointer = component$<PointerProps>(({ angle }) => {
   // console.log(poly);
   return <polygon points={poly} fill="white" transform={`rotate(${angle}, ${centreWidth}, ${centreHeight})`} />;
 });
+
 export const ResetButton = component$(() => {
-  // const ctx = useHIITContext();
   const ctx = useContext(InputContext);
+
   return <button onClick$={() => (ctx.now = 0)}>↺</button>;
 });
 
@@ -493,9 +490,82 @@ export const Label = component$(({}) => {
   );
 });
 
-const Workout = component$<{ workout: WorkoutContext }>(({ workout }) => {
+export interface TagProps {
+  label: string;
+  count: number;
+  selected: boolean;
+  onClick: QRL<() => void>;
+}
+
+export const Tag = component$<TagProps>(({ label, count, selected, onClick }) => {
+  return (
+    <button onClick$={onClick} class={selected ? 'selected-tag' : 'unselected-tag'}>
+      {label} ({count})
+    </button>
+  );
+});
+
+// example tagState
+const ts2 = {
+  running: { count: 3, selected: false },
+  rowing: { count: 5, selected: true },
+  'weight-lifting': { count: 1, selected: false },
+  advanced: { count: 1, selected: true },
+};
+
+export const TagsList = component$<{ tagState: Record<string, { count: number; selected: boolean }> }>(
+  ({ tagState }) => {
+    const ctx = useContext(InputContext);
+    const flat = useStore(Object.entries(tagState).sort(([, lhs], [, rhs]) => rhs.count - lhs.count));
+    const handleTagEvent = $(async (label: string) => {
+      const { workoutID, tags } = ctx;
+
+      const tag = tagState[label];
+      tag.selected = !tag.selected;
+      tag.count = tag.count + (tag.selected ? +1 : -1);
+
+      // [['running', { count: 3, selected: false }], ['rowing', { count: 5, selected: true }], ...]
+      const blah = Object.entries(tagState).filter(([, { selected }]) => selected);
+
+      const labels = blah.map(([label, { selected }]) => label);
+
+      const { error } = await supabase.from('workouts').update({ tags: labels }).eq('workoutID', workoutID);
+    });
+
+    return (
+      <>
+        {flat.map(([label, { count, selected }]) => (
+          <Tag
+            label={label}
+            count={count}
+            selected={selected}
+            onClick={$(async () => {
+              await handleTagEvent(label);
+            })}
+          />
+        ))}
+      </>
+    );
+  },
+);
+
+export const ToggleMode = component$(() => {
+  const ctx = useContext(GlobalContext);
+
+  return (
+    <button
+      onClick$={() => {
+        ctx.editMode = !ctx.editMode;
+      }}
+    >
+      {ctx.editMode ? 'Finish Editing' : 'Edit Workout'}
+    </button>
+  );
+});
+
+const Workout = component$<{ workout: WorkoutContext; editMode: boolean }>(({ workout, editMode }) => {
   const state = useStore<IntervalContext>({
-    restColour: 'orange',
+    restColour: 'green',
     sprintColour: 'red',
     restDurations: [90, 75, 60, 80],
     sprintDuration: 30,
@@ -599,6 +669,21 @@ const Workout = component$<{ workout: WorkoutContext }>(({ workout }) => {
     }
   });
 
+  // across all of my workouts, I've used 3 different tags.
+  const ts = useStore({
+    running: { count: 3, selected: false },
+    rowing: { count: 5, selected: false },
+    'weight-lifting': { count: 1, selected: true },
+    advanced: { count: 1, selected: true },
+  });
+
+  const ts2 = {
+    running: { count: 3, selected: false },
+    rowing: { count: 5, selected: true },
+    'weight-lifting': { count: 1, selected: false },
+    advanced: { count: 1, selected: true },
+  };
+
   return (
     <>
       <h1>{state.title}</h1>
@@ -626,37 +711,40 @@ const Workout = component$<{ workout: WorkoutContext }>(({ workout }) => {
       </div>
       <div class="under">
         <div>
-          <PlayPauseButton onClick={onPlayPause} />
-          <ResetButton />
+          {editMode && <PlayPauseButton onClick={onPlayPause} />}
+          {editMode && <ResetButton />}
           <BackButton onClick={onBack} />
           <ForwardButton onClick={onForward} />
-          <Plus5Button />
-          <Minus5Button />
-          <DuplicateButton />
-          <DeleteButton />
+          {editMode && <Plus5Button />}
+          {editMode && <Minus5Button />}
+          {editMode && <DuplicateButton />}
+          {editMode && <DeleteButton />}
         </div>
       </div>
       <br />
       <br />
-      <div>
-        {/*<HeartChart />*/}
-        <BarChart phaseHeartRates={phaseHeartRates.allPhases} />
-      </div>
-      <Profile />
+      <ToggleMode />
       <SaveButton />
       <SaveAsButton />
-      <WorkoutTitleEntry />
+      {editMode && <WorkoutTitleEntry />}
+      <br />
+      {editMode && <TagsList tagState={ts} />}
     </>
   );
 });
 
 export default component$(() => {
-  const workouts = useStore({ allWorkouts: [] as WorkoutContext[], currentWorkoutIndex: 0 });
+  const workouts = useStore<GlobalStore>({
+    allWorkouts: [] as WorkoutContext[],
+    currentWorkoutIndex: 0,
+    editMode: false,
+  });
+
+  useContextProvider(GlobalContext, workouts);
 
   // load first workout on initial render
   useTask$(async () => {
     const { data, error, count } = await supabase.from('workouts').select();
-
     console.log('Data returned from Supabase', data, error, count);
     if (!error && data && data.length > 0) {
       workouts.allWorkouts = data;
@@ -675,12 +763,19 @@ export default component$(() => {
       workouts.currentWorkoutIndex++;
     }
   });
-
   return (
     <>
-      <button onClick$={previous}>Previous</button>
-      <button onClick$={next}>Next</button>
-      <Workout key={workouts.currentWorkoutIndex} workout={workouts.allWorkouts[workouts.currentWorkoutIndex]} />
+      {workouts.editMode && (
+        <>
+          <button onClick$={previous}>Previous</button>
+          <button onClick$={next}>Next</button>
+        </>
+      )}
+      <Workout
+        key={workouts.currentWorkoutIndex}
+        workout={workouts.allWorkouts[workouts.currentWorkoutIndex]}
+        editMode={workouts.editMode}
+      />
     </>
   );
 });

@@ -37,8 +37,14 @@ export interface WorkoutContext {
   restDurations: number[];
   sprintDuration: number;
   warmupDuration: number;
+  tags: string[];
 }
 
+export interface TagStore {
+  label: string;
+  count: number;
+  selected: boolean;
+}
 export interface IntervalContext extends WorkoutContext {
   radius: number;
   svgWidth: number;
@@ -49,9 +55,19 @@ export interface IntervalContext extends WorkoutContext {
   now: number;
   currentRest?: number;
 }
+
+export interface GlobalStore {
+  allWorkouts: WorkoutContext[];
+  currentWorkoutIndex: number;
+  editMode: boolean;
+}
+
+export const TagContext = createContextId<TagStore>('thing.stuff');
 export const InputContext = createContextId<IntervalContext>('docs.theme-context');
 
 export const TimeContext = createContextId<TimerStore>('time.stuff');
+
+export const GlobalContext = createContextId<GlobalStore>('global.stuff');
 
 export interface TimerStore {
   timer?: NodeJS.Timeout;
