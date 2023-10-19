@@ -607,6 +607,7 @@ const Workout = component$<{ workout: WorkoutContext; editMode: boolean }>(({ wo
     workoutID: crypto.randomUUID(),
     title: 'name',
     created_at: new Date(),
+    tags: [],
     ...workout,
   });
 
