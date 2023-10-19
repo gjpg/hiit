@@ -4,6 +4,7 @@ import {
   QRL,
   useContext,
   useContextProvider,
+  useSignal,
   useStore,
   useTask$,
   useVisibleTask$,
@@ -516,10 +517,10 @@ const ts2 = {
 export const TagsList = component$<{ tagState: Record<string, { count: number; selected: boolean }> }>(
   ({ tagState }) => {
     const ctx = useContext(InputContext);
+    const { workoutID, tags } = ctx;
+
     const flat = useStore(Object.entries(tagState).sort(([, lhs], [, rhs]) => rhs.count - lhs.count));
     const handleTagEvent = $(async (label: string) => {
-      const { workoutID, tags } = ctx;
-
       const tag = tagState[label];
       tag.selected = !tag.selected;
       tag.count = tag.count + (tag.selected ? +1 : -1);
@@ -531,9 +532,33 @@ export const TagsList = component$<{ tagState: Record<string, { count: number; s
 
       const { error } = await supabase.from('workouts').update({ tags: labels }).eq('workoutID', workoutID);
     });
+    const isInputVisible = useSignal(false);
+    const newTag = $(() => {
+      isInputVisible.value = !isInputVisible.value;
+    });
 
+    const saveNewTag = $(async (event: any) => {
+      console.log(event.target.value);
+      const tag = event.target.value.trim();
+      isInputVisible.value = false;
+
+      if (!tag) return;
+
+      console.log({ tags });
+      const { error } = await supabase
+        .from('workouts')
+        .update({ tags: [tag, ...tags] })
+        .eq('workoutID', workoutID);
+      console.log({ error });
+
+      if (!error) {
+        flat.unshift([tag, { count: 1, selected: true }]);
+      }
+    });
     return (
       <>
+        <button onClick$={newTag}>+</button>
+        {isInputVisible.value && <input onChange$={saveNewTag} />}
         {flat.map(([label, { count, selected }]) => (
           <Tag
             label={label}
@@ -711,8 +736,8 @@ const Workout = component$<{ workout: WorkoutContext; editMode: boolean }>(({ wo
       </div>
       <div class="under">
         <div>
-          {editMode && <PlayPauseButton onClick={onPlayPause} />}
-          {editMode && <ResetButton />}
+          {!editMode && <PlayPauseButton onClick={onPlayPause} />}
+          {!editMode && <ResetButton />}
           <BackButton onClick={onBack} />
           <ForwardButton onClick={onForward} />
           {editMode && <Plus5Button />}
@@ -728,6 +753,7 @@ const Workout = component$<{ workout: WorkoutContext; editMode: boolean }>(({ wo
       <SaveAsButton />
       {editMode && <WorkoutTitleEntry />}
       <br />
+
       {editMode && <TagsList tagState={ts} />}
     </>
   );
