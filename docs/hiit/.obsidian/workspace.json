@@ -26,9 +26,21 @@
                 "source": false
               }
             }
+          },
+          {
+            "id": "d7c8b32ec2b3d452",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Tags Feature.md",
+                "mode": "source",
+                "source": false
+              }
+            }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -155,9 +167,11 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "25e21d0c3798ea13",
+  "active": "d7c8b32ec2b3d452",
   "lastOpenFiles": [
-    "Pasted image 20231017094554.png",
-    "Tags Feature.md"
+    "HeartGraph.tsx",
+    "SVG Heart Graph Feature.md",
+    "Tags Feature.md",
+    "Pasted image 20231017094554.png"
   ]
 }

@@ -31,11 +31,6 @@ export default component$(() => {
         message.message = 'Success, redirecting';
         message.status = 'success';
 
-        console.log(data);
-        {
-          const { data, error } = await supabase.from('profiles').select();
-          console.log('profiles', data);
-        }
         await nav('/hiit');
       } else {
         message.message = 'There was a problem logging in.' + error?.message;

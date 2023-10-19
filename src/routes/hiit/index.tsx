@@ -198,8 +198,6 @@ export const SaveAsButton = component$(() => {
 export const WorkoutTitleEntry = component$(() => {
   const ctx = useContext(InputContext);
   const handleChangeEvent = $(async (event: any) => {
-    console.log(event.target.value);
-
     ctx.title = event.target.value;
   });
 
@@ -538,13 +536,11 @@ export const TagsList = component$<{ tagState: Record<string, { count: number; s
     });
 
     const saveNewTag = $(async (event: any) => {
-      console.log(event.target.value);
       const tag = event.target.value.trim();
       isInputVisible.value = false;
 
       if (!tag) return;
 
-      console.log({ tags });
       const { error } = await supabase
         .from('workouts')
         .update({ tags: [tag, ...tags] })
@@ -561,6 +557,7 @@ export const TagsList = component$<{ tagState: Record<string, { count: number; s
         {isInputVisible.value && <input onChange$={saveNewTag} />}
         {flat.map(([label, { count, selected }]) => (
           <Tag
+            key={label}
             label={label}
             count={count}
             selected={selected}
@@ -631,9 +628,9 @@ const Workout = component$<{ workout: WorkoutContext; editMode: boolean; tagStat
     });
 
     useTask$(({ track }) => {
-      track(state.workoutID);
+      track(workout);
       Object.values(tagState).forEach((tag) => (tag.selected = false));
-      workout.tags.forEach((tag) => (tagState[tag].selected = true));
+      workout?.tags.forEach((tag) => (tagState[tag].selected = true));
     });
 
     const timeState = useStore<TimerStore>({
@@ -710,8 +707,6 @@ const Workout = component$<{ workout: WorkoutContext; editMode: boolean; tagStat
       advanced: { count: 1, selected: true },
     });
 
-    console.log({ ts });
-
     const ts2 = {
       running: { count: 3, selected: false },
       rowing: { count: 5, selected: true },
@@ -764,7 +759,7 @@ const Workout = component$<{ workout: WorkoutContext; editMode: boolean; tagStat
         {editMode && <WorkoutTitleEntry />}
         <br />
 
-        {editMode && <TagsList tagState={tagState.value} />}
+        {editMode && <TagsList tagState={tagState} />}
       </>
     );
   },
@@ -801,8 +796,6 @@ export default component$(() => {
 
         tagState.value[tag].count++;
       });
-
-    console.log({ ts: tagState.value });
   });
 
   const previous = $(() => {
@@ -824,12 +817,14 @@ export default component$(() => {
           <button onClick$={next}>Next</button>
         </>
       )}
-      <Workout
-        key={workouts.currentWorkoutIndex}
-        workout={workouts.allWorkouts[workouts.currentWorkoutIndex]}
-        editMode={workouts.editMode}
-        tagState={tagState}
-      />
+      {workouts.allWorkouts[workouts.currentWorkoutIndex] && (
+        <Workout
+          key={workouts.currentWorkoutIndex}
+          workout={workouts.allWorkouts[workouts.currentWorkoutIndex]}
+          editMode={workouts.editMode}
+          tagState={tagState.value}
+        />
+      )}
     </>
   );
 });

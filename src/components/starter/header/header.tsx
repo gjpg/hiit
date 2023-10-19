@@ -2,7 +2,7 @@ import { $, component$ } from '@builder.io/qwik';
 import { QwikLogo } from '../icons/qwik';
 import styles from './header.module.css';
 import { supabase } from '~/utils/supabase';
-import { useNavigate } from '@builder.io/qwik-city';
+import { Link, useNavigate } from '@builder.io/qwik-city';
 
 export default component$(() => {
   const nav = useNavigate();
@@ -44,9 +44,7 @@ export default component$(() => {
             </a>
           </li>
           <li>
-            <a href="/login" target="_blank">
-              Log In
-            </a>
+            <Link href="/login">Log In</Link>
           </li>
           <li>
             <button onClick$={handleSignOutEvent}>Sign Out</button>

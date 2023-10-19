@@ -1,4 +1,4 @@
-import { createContextId, useContext } from '@builder.io/qwik';
+import { createContextId, useContext, type NoSerialize } from '@builder.io/qwik';
 
 export function useHIITContext() {
   const ctx = useContext(InputContext);
@@ -70,5 +70,5 @@ export const TimeContext = createContextId<TimerStore>('time.stuff');
 export const GlobalContext = createContextId<GlobalStore>('global.stuff');
 
 export interface TimerStore {
-  timer?: NodeJS.Timeout;
+  timer?: NoSerialize<NodeJS.Timeout>;
 }
