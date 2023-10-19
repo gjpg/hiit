@@ -588,177 +588,187 @@ export const ToggleMode = component$(() => {
   );
 });
 
-const Workout = component$<{ workout: WorkoutContext; editMode: boolean }>(({ workout, editMode }) => {
-  const state = useStore<IntervalContext>({
-    restColour: 'green',
-    sprintColour: 'red',
-    restDurations: [90, 75, 60, 80],
-    sprintDuration: 30,
-    radius: 110,
-    warmupDuration: 300,
-    labelColour: 'blue',
-    svgWidth: 400,
-    svgHeight: 400,
-    strokeWidth: 30,
-    cx: '50%',
-    cy: '50%',
-    now: 0,
-    currentRest: -1,
-    workoutID: crypto.randomUUID(),
-    title: 'name',
-    created_at: new Date(),
-    tags: [],
-    ...workout,
-  });
-
-  //todo-lastTime isn't DRY
-  const phaseStartTimes = $(() => {
-    const times = [0];
-
-    times.push(state.warmupDuration);
-    state.restDurations.forEach((rest) => {
-      const lastTime = times[times.length - 1];
-      times.push(lastTime + state.sprintDuration);
-      times.push(lastTime + state.sprintDuration + rest);
+const Workout = component$<{ workout: WorkoutContext; editMode: boolean; tagState: {} }>(
+  ({ workout, editMode, tagState }) => {
+    const state = useStore<IntervalContext>({
+      restColour: 'green',
+      sprintColour: 'red',
+      restDurations: [90, 75, 60, 80],
+      sprintDuration: 30,
+      radius: 110,
+      warmupDuration: 300,
+      labelColour: 'blue',
+      svgWidth: 400,
+      svgHeight: 400,
+      strokeWidth: 30,
+      cx: '50%',
+      cy: '50%',
+      now: 0,
+      currentRest: -1,
+      workoutID: crypto.randomUUID(),
+      title: 'name',
+      created_at: new Date(),
+      tags: [],
+      ...workout,
     });
-    const lastTime = times[times.length - 1];
-    times.push(lastTime);
 
-    // console.log(times);
+    //todo-lastTime isn't DRY
+    const phaseStartTimes = $(() => {
+      const times = [0];
 
-    return times;
-  });
+      times.push(state.warmupDuration);
+      state.restDurations.forEach((rest) => {
+        const lastTime = times[times.length - 1];
+        times.push(lastTime + state.sprintDuration);
+        times.push(lastTime + state.sprintDuration + rest);
+      });
+      const lastTime = times[times.length - 1];
+      times.push(lastTime);
 
-  const timeState = useStore<TimerStore>({
-    timer: undefined,
-  });
+      // console.log(times);
 
-  const phaseHeartRates = useStore<{ allPhases: number[][] }>({
-    allPhases: [[1, 2, 3, 4, 5, 6], [6, 5, 4, 3, 4], []],
-  });
+      return times;
+    });
 
-  useContextProvider(InputContext, state);
-  useContextProvider(TimeContext, timeState);
+    useTask$(({ track }) => {
+      track(state.workoutID);
+      Object.values(tagState).forEach((tag) => (tag.selected = false));
+      workout.tags.forEach((tag) => (tagState[tag].selected = true));
+    });
 
-  const onPlayPause = $(() => {
-    //const { workoutDuration } = useHIITContext();
-    if (timeState.timer) {
-      clearInterval(timeState.timer);
-      timeState.timer = undefined;
-    } else {
-      timeState.timer = setInterval(() => {
-        state.now += 1;
-        const lastPhase = phaseHeartRates.allPhases[phaseHeartRates.allPhases.length - 1];
+    const timeState = useStore<TimerStore>({
+      timer: undefined,
+    });
 
-        lastPhase.push(5);
+    const phaseHeartRates = useStore<{ allPhases: number[][] }>({
+      allPhases: [[1, 2, 3, 4, 5, 6], [6, 5, 4, 3, 4], []],
+    });
 
-        // console.log(phaseHeartRates);
-      }, 1000);
-    }
+    useContextProvider(InputContext, state);
+    useContextProvider(TimeContext, timeState);
 
-    //todo- set bounds 0 <= now <= workoutDuration.
-    // when now < 0, set now to 0, stop incrementing and set icon to play button.
-    // when workoutDuration =< now, stop incrementing, set now = workoutDuration, set icon to play icon
-    // right now, icon is determined only by clicking, it should instead be related to whether the timer is active
-    // current attempt at fixing is below, but const { workoutDuration } = useHIITContext(); freezes the timer entirely
+    const onPlayPause = $(() => {
+      //const { workoutDuration } = useHIITContext();
+      if (timeState.timer) {
+        clearInterval(timeState.timer);
+        timeState.timer = undefined;
+      } else {
+        timeState.timer = setInterval(() => {
+          state.now += 1;
+          const lastPhase = phaseHeartRates.allPhases[phaseHeartRates.allPhases.length - 1];
 
-    // if (state.now < 0) {
-    //   clearInterval(timeState.timer);
-    //   state.now = 0;
-    // }
-    //
-    // if (state.now >= workoutDuration) {
-    //   clearInterval(timeState.timer);
-    //   state.now = workoutDuration;
-    // }
-  });
+          lastPhase.push(5);
 
-  const onForward = $(async () => {
-    const startTimes = await phaseStartTimes();
-    // console.log('Forward', startTimes);
-    const nextStartTime = startTimes.find((start) => state.now < start);
+          // console.log(phaseHeartRates);
+        }, 1000);
+      }
 
-    // console.log(nextStartTime);
+      //todo- set bounds 0 <= now <= workoutDuration.
+      // when now < 0, set now to 0, stop incrementing and set icon to play button.
+      // when workoutDuration =< now, stop incrementing, set now = workoutDuration, set icon to play icon
+      // right now, icon is determined only by clicking, it should instead be related to whether the timer is active
+      // current attempt at fixing is below, but const { workoutDuration } = useHIITContext(); freezes the timer entirely
 
-    if (nextStartTime) {
-      state.now = nextStartTime;
-    }
-  });
+      // if (state.now < 0) {
+      //   clearInterval(timeState.timer);
+      //   state.now = 0;
+      // }
+      //
+      // if (state.now >= workoutDuration) {
+      //   clearInterval(timeState.timer);
+      //   state.now = workoutDuration;
+      // }
+    });
 
-  const onBack = $(async () => {
-    const startTimes = await phaseStartTimes();
-    const reverseStartTimes = startTimes.reverse();
-    const previousStartTime = reverseStartTimes.find((start) => start < state.now);
+    const onForward = $(async () => {
+      const startTimes = await phaseStartTimes();
+      // console.log('Forward', startTimes);
+      const nextStartTime = startTimes.find((start) => state.now < start);
 
-    if (previousStartTime !== undefined) {
-      state.now = previousStartTime;
-    }
-  });
+      // console.log(nextStartTime);
 
-  // across all of my workouts, I've used 3 different tags.
-  const ts = useStore({
-    running: { count: 3, selected: false },
-    rowing: { count: 5, selected: false },
-    'weight-lifting': { count: 1, selected: true },
-    advanced: { count: 1, selected: true },
-  });
+      if (nextStartTime) {
+        state.now = nextStartTime;
+      }
+    });
 
-  const ts2 = {
-    running: { count: 3, selected: false },
-    rowing: { count: 5, selected: true },
-    'weight-lifting': { count: 1, selected: false },
-    advanced: { count: 1, selected: true },
-  };
+    const onBack = $(async () => {
+      const startTimes = await phaseStartTimes();
+      const reverseStartTimes = startTimes.reverse();
+      const previousStartTime = reverseStartTimes.find((start) => start < state.now);
 
-  return (
-    <>
-      <h1>{state.title}</h1>
-      <div class="workout">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox={`0, 0, ${state.svgWidth}, ${state.svgHeight}`}
-          width={state.svgWidth}
-          height={state.svgHeight}
-        >
-          <Label />
+      if (previousStartTime !== undefined) {
+        state.now = previousStartTime;
+      }
+    });
 
-          <Warmup />
-          {new Array(state.restDurations.length).fill(0).map((_, index) => (
-            <Interval key={index} index={index} />
-          ))}
+    // across all of my workouts, I've used 3 different tags.
+    const ts = useStore({
+      running: { count: 3, selected: false },
+      rowing: { count: 5, selected: false },
+      'weight-lifting': { count: 1, selected: true },
+      advanced: { count: 1, selected: true },
+    });
 
-          {/*<CoolDown />*/}
-          <TimePointer time={state.now} />
-          <PhaseProgress />
-        </svg>
-        <div class="timer">
-          <DigitalTimer />
+    console.log({ ts });
+
+    const ts2 = {
+      running: { count: 3, selected: false },
+      rowing: { count: 5, selected: true },
+      'weight-lifting': { count: 1, selected: false },
+      advanced: { count: 1, selected: true },
+    };
+
+    return (
+      <>
+        <h1>{state.title}</h1>
+        <div class="workout">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox={`0, 0, ${state.svgWidth}, ${state.svgHeight}`}
+            width={state.svgWidth}
+            height={state.svgHeight}
+          >
+            <Label />
+
+            <Warmup />
+            {new Array(state.restDurations.length).fill(0).map((_, index) => (
+              <Interval key={index} index={index} />
+            ))}
+
+            {/*<CoolDown />*/}
+            <TimePointer time={state.now} />
+            <PhaseProgress />
+          </svg>
+          <div class="timer">
+            <DigitalTimer />
+          </div>
         </div>
-      </div>
-      <div class="under">
-        <div>
-          {!editMode && <PlayPauseButton onClick={onPlayPause} />}
-          {!editMode && <ResetButton />}
-          <BackButton onClick={onBack} />
-          <ForwardButton onClick={onForward} />
-          {editMode && <Plus5Button />}
-          {editMode && <Minus5Button />}
-          {editMode && <DuplicateButton />}
-          {editMode && <DeleteButton />}
+        <div class="under">
+          <div>
+            {!editMode && <PlayPauseButton onClick={onPlayPause} />}
+            {!editMode && <ResetButton />}
+            <BackButton onClick={onBack} />
+            <ForwardButton onClick={onForward} />
+            {editMode && <Plus5Button />}
+            {editMode && <Minus5Button />}
+            {editMode && <DuplicateButton />}
+            {editMode && <DeleteButton />}
+          </div>
         </div>
-      </div>
-      <br />
-      <br />
-      <ToggleMode />
-      <SaveButton />
-      <SaveAsButton />
-      {editMode && <WorkoutTitleEntry />}
-      <br />
+        <br />
+        <br />
+        <ToggleMode />
+        <SaveButton />
+        <SaveAsButton />
+        {editMode && <WorkoutTitleEntry />}
+        <br />
 
-      {editMode && <TagsList tagState={ts} />}
-    </>
-  );
-});
+        {editMode && <TagsList tagState={tagState.value} />}
+      </>
+    );
+  },
+);
 
 export default component$(() => {
   const workouts = useStore<GlobalStore>({
@@ -766,10 +776,11 @@ export default component$(() => {
     currentWorkoutIndex: 0,
     editMode: false,
   });
+  const tagState = useSignal<Record<string, { count: number; selected: boolean }>>({});
 
   useContextProvider(GlobalContext, workouts);
 
-  // load first workout on initial render
+  // load all workouts on initial render
   useTask$(async () => {
     const { data, error, count } = await supabase.from('workouts').select();
     console.log('Data returned from Supabase', data, error, count);
@@ -777,6 +788,21 @@ export default component$(() => {
       workouts.allWorkouts = data;
       workouts.currentWorkoutIndex = 0;
     }
+
+    // const ts: Record<string, { count: number; selected: boolean }> = {};
+
+    data
+      ?.map((w) => {
+        return w.tags;
+      })
+      .flat()
+      .forEach((tag) => {
+        if (!tagState.value[tag]) tagState.value[tag] = { count: 0, selected: false };
+
+        tagState.value[tag].count++;
+      });
+
+    console.log({ ts: tagState.value });
   });
 
   const previous = $(() => {
@@ -802,6 +828,7 @@ export default component$(() => {
         key={workouts.currentWorkoutIndex}
         workout={workouts.allWorkouts[workouts.currentWorkoutIndex]}
         editMode={workouts.editMode}
+        tagState={tagState}
       />
     </>
   );
