@@ -771,7 +771,7 @@ export default component$(() => {
     currentWorkoutIndex: 0,
     editMode: false,
   });
-  const tagState = useSignal<Record<string, { count: number; selected: boolean }>>({});
+  const tagState = useStore<Record<string, { count: number; selected: boolean }>>({});
 
   useContextProvider(GlobalContext, workouts);
 
@@ -792,9 +792,9 @@ export default component$(() => {
       })
       .flat()
       .forEach((tag) => {
-        if (!tagState.value[tag]) tagState.value[tag] = { count: 0, selected: false };
+        if (!tagState[tag]) tagState[tag] = { count: 0, selected: false };
 
-        tagState.value[tag].count++;
+        tagState[tag].count++;
       });
   });
 
@@ -822,7 +822,7 @@ export default component$(() => {
           key={workouts.currentWorkoutIndex}
           workout={workouts.allWorkouts[workouts.currentWorkoutIndex]}
           editMode={workouts.editMode}
-          tagState={tagState.value}
+          tagState={tagState}
         />
       )}
     </>
