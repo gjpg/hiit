@@ -30,11 +30,14 @@
   color: white;
   display: inline-block;
   padding: 0;
-  text-decoration: none;
 }
 
 .header li a:hover {
   color: var(--qwik-light-blue);
+}
+
+.current {
+  text-decoration: underline;
 }
 
 @media (min-width: 450px) {

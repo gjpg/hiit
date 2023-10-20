@@ -1,55 +1,33 @@
 import { component$ } from '@builder.io/qwik';
 import styles from './header.module.css';
-import { supabase } from '~/utils/supabase';
-import { Link, useNavigate } from '@builder.io/qwik-city';
+import { Link, useLocation } from '@builder.io/qwik-city';
+
+export const NavLink = component$<{ href: string; label: string }>(({ href, label }) => {
+  const { url } = useLocation();
+  const { pathname } = url;
+  const isCurrent = href + '/' === pathname;
+
+  console.log({ pathname, isCurrent });
+  return (
+    <li>
+      <Link href={href} class={isCurrent ? styles.current : ''}>
+        <label>{label}</label>
+      </Link>
+    </li>
+  );
+});
 
 export default component$(() => {
-  const nav = useNavigate();
-
-  const handleSignOutEvent = $(async (event: any) => {
-    const { error } = await supabase.auth.signOut();
-
-    console.log('SignOut error:', error);
-    await nav('/login');
-  });
-
   return (
     <header class={styles.header}>
-      <div class={['container', styles.wrapper]}>
-        <div class={styles.logo}>
-          <a href="/" title="qwik">
-            <QwikLogo height={50} width={143} />
-          </a>
-        </div>
+      <nav class={['container', styles.wrapper]}>
         <ul>
-          <li>
-            <a href="https://qwik.builder.io/docs/components/overview/" target="_blank">
-              Docs
-            </a>
-          </li>
-          <li>
-            <a href="https://qwik.builder.io/examples/introduction/hello-world/" target="_blank">
-              Examples
-            </a>
-          </li>
-          <li>
-            <a href="https://qwik.builder.io/tutorial/welcome/overview/" target="_blank">
-              Tutorials
-            </a>
-          </li>
-          <li>
-            <a href="/signup" target="_blank">
-              Create Account
-            </a>
-          </li>
-          <li>
-            <Link href="/login">Log In</Link>
-          </li>
-          <li>
-            <button onClick$={handleSignOutEvent}>Sign Out</button>
-          </li>
+          <NavLink label="Go" href="/hiit" />
+          <NavLink label="Edit" href="/edit" />
+          <NavLink label="Search" href="/search" />
+          <NavLink label="Log In" href="/login" />
         </ul>
-      </div>
+      </nav>
     </header>
   );
 });

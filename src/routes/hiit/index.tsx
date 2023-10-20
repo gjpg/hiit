@@ -210,21 +210,6 @@ const Workout = component$<{ workout: WorkoutContext; editMode: boolean; tagStat
       }
     });
 
-    // across all of my workouts, I've used 3 different tags.
-    const ts = useStore({
-      running: { count: 3, selected: false },
-      rowing: { count: 5, selected: false },
-      'weight-lifting': { count: 1, selected: true },
-      advanced: { count: 1, selected: true },
-    });
-
-    const ts2 = {
-      running: { count: 3, selected: false },
-      rowing: { count: 5, selected: true },
-      'weight-lifting': { count: 1, selected: false },
-      advanced: { count: 1, selected: true },
-    };
-
     return (
       <>
         <h1>{state.title}</h1>
