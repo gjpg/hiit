@@ -78,3 +78,22 @@ body {
   padding: 0;
   line-height: inherit;
 }
+
+.colour-red {
+  fill: none;
+  stroke: red;
+  stroke-width: 2;
+}
+.colour-green {
+  fill: none;
+  stroke: green;
+  stroke-width: 2;
+}
+
+.colour-white {
+  fill: white;
+}
+
+.colour-grey {
+  fill:grey;
+}
