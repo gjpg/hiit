@@ -16,62 +16,62 @@ export const HeartGraph = component$<RateTimeGraph>(({ plots, clip, rateThreshol
 
   return (
     <div>
-      <svg width="600" height="400" id="graph">
-        <line x1="50" y1="350" x2="550" y2="350" style="stroke: black; stroke-width: 2;" />
-        <line x1="50" y1="50" x2="50" y2="350" style="stroke: black; stroke-width: 2;" />
+      <svg width="600" height="400" id="graph" style={{ margin: 100 }}>
+        <g transform="scale(1,-1) translate(0, -300)">
+          {timeZones.flat()}
+          {thresholds}
+          {polyLines}
 
-        {timeZones.flat()}
-        {polyLines}
+          <text x="95" y="370">
+            X1
+          </text>
+          <text x="145" y="370">
+            X2
+          </text>
+          <text x="195" y="370">
+            X3
+          </text>
+          <text x="245" y="370">
+            X4
+          </text>
+          <text x="295" y="370">
+            X5
+          </text>
+          <text x="345" y="370">
+            X6
+          </text>
+          <text x="395" y="370">
+            X7
+          </text>
+          <text x="445" y="370">
+            X8
+          </text>
+          <text x="495" y="370">
+            X9
+          </text>
+          <text x="545" y="370">
+            X10
+          </text>
 
-        <text x="95" y="370">
-          X1
-        </text>
-        <text x="145" y="370">
-          X2
-        </text>
-        <text x="195" y="370">
-          X3
-        </text>
-        <text x="245" y="370">
-          X4
-        </text>
-        <text x="295" y="370">
-          X5
-        </text>
-        <text x="345" y="370">
-          X6
-        </text>
-        <text x="395" y="370">
-          X7
-        </text>
-        <text x="445" y="370">
-          X8
-        </text>
-        <text x="495" y="370">
-          X9
-        </text>
-        <text x="545" y="370">
-          X10
-        </text>
-
-        <text x="40" y="55">
-          Y1
-        </text>
-        <text x="40" y="105">
-          Y2
-        </text>
-        <text x="40" y="155">
-          Y3
-        </text>
-        <text x="40" y="205">
-          Y4
-        </text>
-        <text x="40" y="255">
-          Y5
-        </text>
-        <text x="40" y="305">
-          Y6
-        </text>
+          <text x="40" y="55">
+            Y1
+          </text>
+          <text x="40" y="105">
+            Y2
+          </text>
+          <text x="40" y="155">
+            Y3
+          </text>
+          <text x="40" y="205">
+            Y4
+          </text>
+          <text x="40" y="255">
+            Y5
+          </text>
+          <text x="40" y="305">
+            Y6
+          </text>
+        </g>
       </svg>
     </div>
   );
