@@ -1,6 +1,23 @@
 import { component$ } from '@builder.io/qwik';
 
 export const HeartGraph = component$<RateTimeGraph>(({ plots, clip, rateThresholds }) => {
+  // {maxHeartRate: {rate: 200, className: "Danger"}, fatBurning: {rate: 120, className: "FatBurning"}} -->
+  // [["maxHeartRate", {rate: 200, className: "Danger"}], ...] -->
+  // [<line x1 y1 x2 y2 className>, <line x1 y1 x2 y2 className>]
+  const thresholds = Object.entries(rateThresholds).map(([name, { rate, className }]) => {
+    console.log(name);
+    return (
+      <>
+        <line x1={100} y1={rate} x2={550} y2={rate} className={className} />
+        <g transform={`scale(1, -1) translate(0, -${2 * rate})`}>
+          <text x={105} y={rate - 5}>
+            {name}
+          </text>
+        </g>
+      </>
+    );
+  });
+
   const polyLines = plots.map((plot, index) => {
     const { points, className } = plot;
     return <polyline key={index} points={points.map(({ x, y }) => `${x},${y}`).join(' ')} className={className} />;
@@ -78,7 +95,7 @@ export const HeartGraph = component$<RateTimeGraph>(({ plots, clip, rateThreshol
 });
 
 export default component$(() => {
-  const points = '100,200 150,250 200,100 250,300 300,180 350,220 400,130 450,250 500,200 550,120'
+  const points = '-100,120 100,200 150,250 200,100 250,300 300,180 350,220 400,130 450,250 500,200 550,120'
     .split(' ')
     .map((xyPair) => xyPair.split(','))
     .map(([x, y]) => ({ x: +x, y: +y }));
@@ -95,7 +112,10 @@ export default component$(() => {
         },
       ]}
       clip={[1, 2, 3, 4]}
-      rateThresholds={{}}
+      rateThresholds={{
+        maxHeartRate: { rate: 200, className: 'danger' },
+        fatBurning: { rate: 120, className: 'fat-burning' },
+      }}
     />
   );
 });

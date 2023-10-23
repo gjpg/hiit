@@ -18,7 +18,7 @@ type ViewPort = [minX: number, minY: number, width: number, height: number];
 // a horizontal line used for drawing heart rate zones
 interface Threshold {
   rate: number;
-  class: string;
+  className: string;
 }
 
 interface RateTimeGraph {
